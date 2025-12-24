@@ -1,0 +1,9 @@
+# Gradle cache
+.gradle/
+
+# Gradle build output (root + subprojects)
+build/
+**/build/
+
+# VS Code
+.vscode/
