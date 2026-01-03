@@ -1,0 +1,25 @@
+.root-pane {
+    -fx-background-color: #1a1a1a; 
+}
+
+.game-title {
+    -fx-font-size: 80px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2ecc71; 
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 10, 0, 0, 5);
+}
+
+.start-button {
+    -fx-background-color: #2ecc71;
+    -fx-text-fill: white;
+    -fx-font-size: 24px;
+    -fx-padding: 15 50;
+    -fx-background-radius: 30;
+    -fx-cursor: hand;
+}
+
+.start-button:hover {
+    -fx-background-color: #27ae60;
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}

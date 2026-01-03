@@ -7,14 +7,14 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) {
-
         ScreenManager screenManager = ScreenManager.getInstance();
         screenManager.init(stage);
         
-        screenManager.addScreen("start", SceneBuilder.buildStartScene());
-        screenManager.addScreen("game", SceneBuilder.buildGameScene());
+        screenManager.addScreen("start", ViewFactory.buildStartView());
+        screenManager.addScreen("game", ViewFactory.buildGameView());
 
-        screenManager.setScreen("game");
+        screenManager.setScreen("start");
+        
         stage.setMaximized(true);
         stage.show();
     }

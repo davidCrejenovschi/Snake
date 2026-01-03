@@ -1,4 +1,5 @@
 package snakeproject;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import java.util.HashMap;
@@ -6,9 +7,9 @@ import java.util.Map;
 
 public class ScreenManager {
 
-    private static ScreenManager instance; 
-    private Stage primaryStage;
-    private Map<String, Scene> screens = new HashMap<>();
+    private static ScreenManager instance;
+    private Stage stage;
+    private final Map<String, Parent> roots = new HashMap<>();
 
     private ScreenManager() {}
 
@@ -20,20 +21,23 @@ public class ScreenManager {
     }
 
     public void init(Stage stage) {
-        this.primaryStage = stage;
+        this.stage = stage;
     }
 
-    public void addScreen(String name, Scene scene) {
-        screens.put(name, scene);
+    public void addScreen(String name, Parent root) {
+        roots.put(name, root);
     }
 
     public void setScreen(String name) {
+        
+        Parent root = roots.get(name);
+        if (root == null) return;
 
-        Scene scene = screens.get(name);
-        if (scene != null && primaryStage != null) {
-            primaryStage.setScene(scene);
+        if (stage.getScene() == null) {
+            Scene scene = new Scene(root);
+            stage.setScene(scene);
         } else {
-            System.err.println("Screen or Stage not found: " + name);
+            stage.getScene().setRoot(root);
         }
     }
 }

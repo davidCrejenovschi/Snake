@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.geometry.Insets?>
+
+<StackPane xmlns:fx="http://javafx.com/fxml"
+           fx:controller="snakeproject.controllers.StartController">
+
+    <VBox alignment="CENTER" spacing="30">
+        <padding>
+            <Insets top="100.0"/>
+        </padding>
+
+        <Label text="SNAKE GAME" styleClass="game-title"/>
+        
+        <Button text="START GAME" 
+                onAction="#onStartButtonClicked" 
+                styleClass="start-button"/>
+    </VBox>
+
+</StackPane>
