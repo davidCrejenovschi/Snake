@@ -1,0 +1,47 @@
+/* Fundalul semitransparent */
+.game-won-overlay {
+    /* Un negru ușor transparent pentru a întuneca jocul din spate */
+    -fx-background-color: rgba(0, 0, 0, 0.85);
+}
+
+/* Textul principal "YOU WON!" */
+.congrats-message {
+    -fx-font-size: 60px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #f1c40f; /* Culoare Aurie (Gold) */
+    /* Efect de strălucire (Glow) */
+    -fx-effect: dropshadow(gaussian, #f39c12, 20, 0.5, 0, 0);
+    -fx-font-family: "Arial"; /* Sau fontul tău preferat */
+}
+
+/* Mesajul secundar */
+.sub-message {
+    -fx-font-size: 20px;
+    -fx-text-fill: white;
+    -fx-padding: 0 0 20 0; /* Puțin spațiu sub text */
+}
+
+/* Butonul de Home */
+.home-button {
+    -fx-background-color: #3498db; /* Un albastru calm */
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-padding: 12 40;
+    -fx-background-radius: 25;
+    -fx-cursor: hand;
+    -fx-border-color: white;
+    -fx-border-radius: 25;
+    -fx-border-width: 2;
+}
+
+.home-button:hover {
+    -fx-background-color: #2980b9;
+    -fx-scale-x: 1.1;
+    -fx-scale-y: 1.1;
+    -fx-effect: dropshadow(gaussian, rgba(52, 152, 219, 0.6), 10, 0, 0, 0);
+}
+
+.home-button:pressed {
+    -fx-background-color: #1abc9c;
+}

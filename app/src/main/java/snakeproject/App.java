@@ -11,7 +11,6 @@ public class App extends Application {
         screenManager.init(stage);
         
         screenManager.addScreen("start", ViewFactory.buildStartView());
-        screenManager.addScreen("game", ViewFactory.buildGameView());
 
         screenManager.setScreen("start");
         

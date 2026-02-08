@@ -6,4 +6,7 @@
            xmlns:fx="http://javafx.com/fxml" 
            fx:controller="snakeproject.controllers.GameController">
     <Canvas fx:id="gameCanvas"/>
+
+    <StackPane fx:id="overlayLayer" visible="false" mouseTransparent="true" />
+    
 </StackPane>

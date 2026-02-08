@@ -23,13 +23,14 @@ public class GameRenderer {
     public void drawField(double sideLength, int numberOfLines) {
         
         clear(sideLength); 
+        drawGridBackground(sideLength, numberOfLines);
         drawHorizontalLines(sideLength, numberOfLines);
         drawVerticalLines(sideLength, numberOfLines);
     }
     
     private void setupGridStyleForLines() {
         
-        gc.setStroke(Color.GREEN);
+        gc.setStroke(Color.web("#2E8B57"));
         gc.setLineWidth(4);
     }
    
@@ -67,6 +68,31 @@ public class GameRenderer {
         gc.strokeLine(sideLength - lineOffset, 0, sideLength - lineOffset, sideLength);
     }
 
+    public void drawGridBackground(double sideLength, int numberOfLines) {
+        
+        int tilesPerSide = numberOfLines + 1;
+        double tileSize = sideLength / tilesPerSide;
+
+        Color color1 = Color.web("#c7e098"); // Verde închis
+        Color color2 = Color.web("#94a86d"); // Verde deschis
+
+        for (int row = 0; row < tilesPerSide; row++) {
+            for (int col = 0; col < tilesPerSide; col++) {
+                
+                double x = col * tileSize;
+                double y = row * tileSize;
+
+                if ((row + col) % 2 == 0) {
+                    gc.setFill(color1);
+                } else {
+                    gc.setFill(color2);
+                }
+
+                gc.fillRect(x, y, tileSize, tileSize);
+            }
+        }
+    }
+
     public void drawPear(double spacing, double GridX, double GridY) {
 
 
@@ -102,15 +128,95 @@ public class GameRenderer {
     }
     
     public void drawSnake(Snake snake, double spacing) {
+        
+        var body = snake.getBody();
+        if (body.isEmpty()) return;
 
-        for (Coordinate2D<Integer> segment : snake.getBody()) {
+        Color snakeColor = Color.web("#AED751"); 
 
-            double x = segment.getX() * spacing + 2;
-            double y = segment.getY() * spacing + 2;
+        gc.setLineCap(javafx.scene.shape.StrokeLineCap.ROUND);
+        gc.setLineJoin(javafx.scene.shape.StrokeLineJoin.ROUND);
 
-            gc.setFill(Color.BLUE);
-            gc.fillRect(x, y, spacing - 4, spacing - 4);
+        // --- 1. DESENARE CORP (Linie continuă) ---
+        if (body.size() > 1) {
+            gc.setStroke(snakeColor);
+            gc.setLineWidth(spacing * 0.85); // Grosimea corpului
+            gc.beginPath();
+
+            // Pornim de la cap
+            double startX = body.getFirst().getX() * spacing + spacing / 2;
+            double startY = body.getFirst().getY() * spacing + spacing / 2;
+            gc.moveTo(startX, startY);
+
+            // Trasam linii către fiecare segment al corpului
+            // 'StrokeLineJoin.ROUND' se va ocupa automat de rotunjirea colțurilor
+            for (int i = 1; i < body.size(); i++) {
+                double nextX = body.get(i).getX() * spacing + spacing / 2;
+                double nextY = body.get(i).getY() * spacing + spacing / 2;
+                gc.lineTo(nextX, nextY);
+            }
+            gc.stroke();
         }
-    }
 
+        // --- 2. CALCUL DIRECȚIE CAP ---
+        var head = body.getFirst();
+        double hX = head.getX() * spacing + spacing / 2;
+        double hY = head.getY() * spacing + spacing / 2;
+
+        double dirX = 0;
+        double dirY = 0;
+
+        if (body.size() > 1) {
+            var neck = body.get(1);
+            dirX = head.getX() - neck.getX();
+            dirY = head.getY() - neck.getY();
+        } else {
+            switch (snake.getDirection()) {
+                case "up" -> dirY = -1;
+                case "down" -> dirY = 1;
+                case "left" -> dirX = -1;
+                case "right" -> dirX = 1;
+            }
+        }
+        double angle = Math.toDegrees(Math.atan2(dirY, dirX));
+
+        // --- 3. DESENARE CAP (Peste corp) ---
+        gc.save();
+        gc.translate(hX, hY);
+        gc.rotate(angle);
+
+        gc.setFill(snakeColor);
+        gc.beginPath();
+        
+        // Formă ovală compactă (nu iese din pătrat)
+        // Pornim din spatele capului
+        gc.moveTo(-spacing * 0.2, 0); 
+
+        // Contur superior
+        gc.bezierCurveTo(
+            -spacing * 0.2, -spacing * 0.45, 
+            spacing * 0.4, -spacing * 0.45, 
+            spacing * 0.4, 0
+        );
+
+        // Contur inferior
+        gc.bezierCurveTo(
+            spacing * 0.4, spacing * 0.45, 
+            -spacing * 0.2, spacing * 0.45, 
+            -spacing * 0.2, 0
+        );
+        
+        gc.fill();
+
+        // --- 4. OCHII ---
+        gc.setFill(Color.BLACK);
+        double eyeSize = spacing * 0.12;
+        double eyeX = spacing * 0.15; 
+        double eyeY = spacing * 0.18; 
+
+        gc.fillOval(eyeX, -eyeY - eyeSize/2, eyeSize, eyeSize);
+        gc.fillOval(eyeX, eyeY - eyeSize/2, eyeSize, eyeSize);
+
+        gc.restore();
+    }
 }

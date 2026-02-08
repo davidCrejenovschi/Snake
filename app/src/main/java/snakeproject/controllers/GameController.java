@@ -32,6 +32,7 @@ public class GameController {
            javafx.application.Platform.runLater(() -> { render();});
         }
     }
+    
     private final LayoutHandler layoutHandler = new LayoutHandler();
 
     @FXML
@@ -43,7 +44,7 @@ public class GameController {
 
     private AnimationTimer gameLoop;
     private GameRenderer gameRenderer = new GameRenderer();
-    private int numberOfLines = 2;
+    private int numberOfLines = 3;
     private Snake snake = new Snake();
     private Coordinate2D<Integer> food;
     private ArrayList<Coordinate2D<Integer>> freeSpots = new ArrayList<>();
@@ -61,6 +62,7 @@ public class GameController {
         if(freeSpots.isEmpty()){
             return null;
         }
+
 
         Random rand = new Random();
         int randomIndex = rand.nextInt(freeSpots.size());
@@ -90,7 +92,8 @@ public class GameController {
             attachKeyEvent(newScene);
         }
         });
-
+        
+        rootPane.setStyle("-fx-background-color: radial-gradient(focus-angle 0deg, focus-distance 0%, center 50% 50%, radius 100%, #1a2e1a 0%, #000500 100%);");
         gameLoop.start();
 
     }
@@ -105,6 +108,7 @@ public class GameController {
                 
                 if (head.getY() > 0) {
                     Coordinate2D<Integer> next = new Coordinate2D<>(head.getX(), head.getY() - 1);
+                    snake.setDirection("up");
                     handleNextStep(next);
                 }
 
@@ -112,6 +116,7 @@ public class GameController {
 
                 if (head.getY() < numberOfLines) { 
                     Coordinate2D<Integer> next = new Coordinate2D<>(head.getX(), head.getY() + 1);
+                    snake.setDirection("down");
                     handleNextStep(next);
                 }
 
@@ -119,6 +124,7 @@ public class GameController {
 
                 if (head.getX() > 0) {
                     Coordinate2D<Integer> next = new Coordinate2D<>(head.getX() - 1, head.getY());
+                    snake.setDirection("left");
                     handleNextStep(next);
                 }
 
@@ -126,6 +132,7 @@ public class GameController {
 
                 if (head.getX() < numberOfLines) {
                     Coordinate2D<Integer> next = new Coordinate2D<>(head.getX() + 1, head.getY());
+                    snake.setDirection("right");
                     handleNextStep(next);
                 }
             }
@@ -147,16 +154,17 @@ public class GameController {
 
     private void handleNextStep(Coordinate2D<Integer> next){
 
-        if(snake.isBodyPart(next)){
+        if(snake.isBodyPart(next) && !(snake.getTail().equals(next))){
             gameLoop.stop();
             showGameOverOverlay();
             return;
         }
 
+
         if(next.equals(food)){
 
             snake.grow(next);
-            freeSpots.remove(next);
+            render();
             food = chooseFreeSpot();
             if(food == null){
                 gameLoop.stop();
@@ -167,10 +175,12 @@ public class GameController {
 
         } else {
 
-            Coordinate2D<Integer> oldTail = snake.getTail(); 
-            snake.move(next);
-            freeSpots.remove(next);
-            freeSpots.add(oldTail);
+            Coordinate2D<Integer> oldTail = snake.getTail();
+            snake.move(next); 
+            if (!next.equals(oldTail)) {
+                freeSpots.remove(next);
+                freeSpots.add(oldTail);
+            }
         }
         
     }

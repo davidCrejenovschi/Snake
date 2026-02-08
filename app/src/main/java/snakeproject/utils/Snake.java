@@ -5,6 +5,7 @@ import java.util.LinkedList;
 public class Snake {
 
     private LinkedList<Coordinate2D<Integer>> body = new LinkedList<>();
+    private String direction = "left";
 
     public void init(Coordinate2D<Integer> startPosition) {
         body.clear();
@@ -35,5 +36,13 @@ public class Snake {
     public boolean isBodyPart(Coordinate2D<Integer> pos){
        
         return body.contains(pos);
+    }
+
+    public void setDirection(String newDirection){
+        direction = newDirection;
+    }
+
+    public String getDirection(){
+        return direction;
     }
 }
