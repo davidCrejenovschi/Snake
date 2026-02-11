@@ -7,21 +7,30 @@ public class GameRenderer {
 
     private GraphicsContext gc;
 
+    private Color gridColor1 = Color.web("#c7e098");
+    private Color gridColor2 = Color.web("#94a86d");
+    private Color gridLineColor = Color.web("#2E8B57");
+    private Color snakeColor = Color.web("#AED751");
+
     public void init(GraphicsContext gc_init){
         gc = gc_init;
     }
 
-    private void clear(double sideLength) {
+    public void setTheme(Color gridColor1, Color gridColor2, Color gridLineColor, Color snakeColor) {
+        this.gridColor1 = gridColor1;
+        this.gridColor2 = gridColor2;
+        this.gridLineColor = gridLineColor;
+        this.snakeColor = snakeColor;
+    }
 
+    private void clear(double sideLength) {
         if (sideLength <= 0) {
             return;
         }
-
         gc.clearRect(0, 0, sideLength, sideLength);
     }
 
     public void drawField(double sideLength, int numberOfLines) {
-        
         clear(sideLength); 
         drawGridBackground(sideLength, numberOfLines);
         drawHorizontalLines(sideLength, numberOfLines);
@@ -29,52 +38,39 @@ public class GameRenderer {
     }
     
     private void setupGridStyleForLines() {
-        
-        gc.setStroke(Color.web("#2E8B57"));
+        gc.setStroke(gridLineColor);
         gc.setLineWidth(4);
     }
    
     private void drawHorizontalLines(double sideLength, int numberOfLines) {
-        
         setupGridStyleForLines();
-        
         double spacing = sideLength / (numberOfLines + 1);
         double lineOffset = 2.0; 
 
         gc.strokeLine(0, lineOffset, sideLength, lineOffset);
-
         for (int i = 0; i < numberOfLines; i++) {
             double position = (i + 1) * spacing;
             gc.strokeLine(0, position, sideLength, position);
         }
-
         gc.strokeLine(0, sideLength - lineOffset, sideLength, sideLength - lineOffset);
     }
 
     private void drawVerticalLines(double sideLength, int numberOfLines) {
-        
         setupGridStyleForLines();
-        
         double spacing = sideLength / (numberOfLines + 1);
         double lineOffset = 2.0; 
         
         gc.strokeLine(lineOffset, 0, lineOffset, sideLength);
-
         for (int i = 0; i < numberOfLines; i++) {
             double position = (i + 1) * spacing;
             gc.strokeLine(position, 0, position, sideLength);
         }
-
         gc.strokeLine(sideLength - lineOffset, 0, sideLength - lineOffset, sideLength);
     }
 
     public void drawGridBackground(double sideLength, int numberOfLines) {
-        
         int tilesPerSide = numberOfLines + 1;
         double tileSize = sideLength / tilesPerSide;
-
-        Color color1 = Color.web("#c7e098"); // Verde închis
-        Color color2 = Color.web("#94a86d"); // Verde deschis
 
         for (int row = 0; row < tilesPerSide; row++) {
             for (int col = 0; col < tilesPerSide; col++) {
@@ -83,9 +79,9 @@ public class GameRenderer {
                 double y = row * tileSize;
 
                 if ((row + col) % 2 == 0) {
-                    gc.setFill(color1);
+                    gc.setFill(gridColor1);
                 } else {
-                    gc.setFill(color2);
+                    gc.setFill(gridColor2);
                 }
 
                 gc.fillRect(x, y, tileSize, tileSize);
@@ -94,8 +90,6 @@ public class GameRenderer {
     }
 
     public void drawPear(double spacing, double GridX, double GridY) {
-
-
         int x = (int) (GridX * spacing + spacing * 0.27);
         int y = (int) (GridY * spacing + spacing * 0.15);
         double w = spacing*0.45;
@@ -104,16 +98,8 @@ public class GameRenderer {
         gc.setFill(Color.web("#FFD54F")); 
         gc.beginPath();
         gc.moveTo(x + w * 0.5, y + h * 0.25);
-        gc.bezierCurveTo(
-            x + w * 0.95, y + h * 0.25, 
-            x + w * 1.1, y + h * 0.95,   
-            x + w * 0.5, y + h * 0.95    
-        );
-        gc.bezierCurveTo(
-            x - w * 0.1, y + h * 0.95,   
-            x + w * 0.05, y + h * 0.25,  
-            x + w * 0.5, y + h * 0.25    
-        );
+        gc.bezierCurveTo(x + w * 0.95, y + h * 0.25, x + w * 1.1, y + h * 0.95, x + w * 0.5, y + h * 0.95);
+        gc.bezierCurveTo(x - w * 0.1, y + h * 0.95, x + w * 0.05, y + h * 0.25, x + w * 0.5, y + h * 0.25);
         gc.fill();
 
         gc.setStroke(Color.web("#5D4037"));
@@ -127,29 +113,69 @@ public class GameRenderer {
         gc.fillOval(x + w * 0.6, y + h * 0.45, w * 0.15, h * 0.2);
     }
     
-    public void drawSnake(Snake snake, double spacing) {
+    public void drawLilyPad(double spacing, double GridX, double GridY) {
         
+        double w = spacing * 0.8;
+        double h = spacing * 0.8;
+        
+        double x = GridX * spacing + (spacing - w) / 2;
+        double y = GridY * spacing + (spacing - h) / 2;
+        
+        double centerX = x + w / 2;
+        double centerY = y + h / 2;
+
+        gc.setFill(Color.web("#4CAF50")); 
+        
+        gc.fillArc(x, y, w, h, 45, 315, javafx.scene.shape.ArcType.ROUND);
+
+        gc.save(); 
+        
+        gc.translate(centerX, centerY);
+
+        int petals = 8; 
+        double petalLen = w * 0.35; 
+        double petalWidth = w * 0.12; 
+
+        gc.setFill(Color.web("#E91E63")); 
+        for (int i = 0; i < petals; i++) {
+            gc.rotate(360.0 / petals);
+            gc.fillOval(0, -petalWidth / 2, petalLen, petalWidth);
+        }
+
+        gc.rotate(360.0 / (petals * 2)); 
+        gc.setFill(Color.web("#F8BBD0")); 
+        double innerPetalLen = petalLen * 0.7;
+        
+        for (int i = 0; i < petals; i++) {
+            gc.rotate(360.0 / petals);
+            gc.fillOval(0, -petalWidth / 2, innerPetalLen, petalWidth);
+        }
+
+        gc.restore(); 
+
+        gc.setFill(Color.web("#FFEB3B")); 
+        double centerSize = w * 0.15;
+        gc.fillOval(centerX - centerSize / 2, centerY - centerSize / 2, centerSize, centerSize);
+    }
+    
+    public void drawSnake(Snake snake, double spacing) {
         var body = snake.getBody();
         if (body.isEmpty()) return;
 
-        Color snakeColor = Color.web("#AED751"); 
+        gc.setStroke(snakeColor);
+        gc.setFill(snakeColor);
 
         gc.setLineCap(javafx.scene.shape.StrokeLineCap.ROUND);
         gc.setLineJoin(javafx.scene.shape.StrokeLineJoin.ROUND);
 
-        // --- 1. DESENARE CORP (Linie continuă) ---
         if (body.size() > 1) {
-            gc.setStroke(snakeColor);
-            gc.setLineWidth(spacing * 0.85); // Grosimea corpului
+            gc.setLineWidth(spacing * 0.85); 
             gc.beginPath();
 
-            // Pornim de la cap
             double startX = body.getFirst().getX() * spacing + spacing / 2;
             double startY = body.getFirst().getY() * spacing + spacing / 2;
             gc.moveTo(startX, startY);
 
-            // Trasam linii către fiecare segment al corpului
-            // 'StrokeLineJoin.ROUND' se va ocupa automat de rotunjirea colțurilor
             for (int i = 1; i < body.size(); i++) {
                 double nextX = body.get(i).getX() * spacing + spacing / 2;
                 double nextY = body.get(i).getY() * spacing + spacing / 2;
@@ -158,7 +184,6 @@ public class GameRenderer {
             gc.stroke();
         }
 
-        // --- 2. CALCUL DIRECȚIE CAP ---
         var head = body.getFirst();
         double hX = head.getX() * spacing + spacing / 2;
         double hY = head.getY() * spacing + spacing / 2;
@@ -180,35 +205,16 @@ public class GameRenderer {
         }
         double angle = Math.toDegrees(Math.atan2(dirY, dirX));
 
-        // --- 3. DESENARE CAP (Peste corp) ---
         gc.save();
         gc.translate(hX, hY);
         gc.rotate(angle);
 
-        gc.setFill(snakeColor);
         gc.beginPath();
-        
-        // Formă ovală compactă (nu iese din pătrat)
-        // Pornim din spatele capului
         gc.moveTo(-spacing * 0.2, 0); 
-
-        // Contur superior
-        gc.bezierCurveTo(
-            -spacing * 0.2, -spacing * 0.45, 
-            spacing * 0.4, -spacing * 0.45, 
-            spacing * 0.4, 0
-        );
-
-        // Contur inferior
-        gc.bezierCurveTo(
-            spacing * 0.4, spacing * 0.45, 
-            -spacing * 0.2, spacing * 0.45, 
-            -spacing * 0.2, 0
-        );
-        
+        gc.bezierCurveTo(-spacing * 0.2, -spacing * 0.45, spacing * 0.4, -spacing * 0.45, spacing * 0.4, 0);
+        gc.bezierCurveTo(spacing * 0.4, spacing * 0.45, -spacing * 0.2, spacing * 0.45, -spacing * 0.2, 0);
         gc.fill();
 
-        // --- 4. OCHII ---
         gc.setFill(Color.BLACK);
         double eyeSize = spacing * 0.12;
         double eyeX = spacing * 0.15; 

@@ -7,9 +7,10 @@ public class Snake {
     private LinkedList<Coordinate2D<Integer>> body = new LinkedList<>();
     private String direction = "left";
 
-    public void init(Coordinate2D<Integer> startPosition) {
+    public void init(Coordinate2D<Integer> head, Coordinate2D<Integer> tail) {
         body.clear();
-        body.addFirst(startPosition);
+        body.add(head);
+        body.add(tail);
     }
 
     public void move(Coordinate2D<Integer> nextPosition) {

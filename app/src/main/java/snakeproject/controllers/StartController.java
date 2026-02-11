@@ -3,6 +3,8 @@ package snakeproject.controllers;
 import javafx.fxml.FXML;
 import snakeproject.ScreenManager;
 import snakeproject.ViewFactory;
+import snakeproject.utils.LevelManager;
+import snakeproject.utils.LevelSettings;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.beans.binding.Bindings;
@@ -51,7 +53,10 @@ public class StartController {
     @FXML
     private void onStartButtonClicked(){
         ScreenManager screenManager = ScreenManager.getInstance();
-        screenManager.addScreen("game", ViewFactory.buildGameView());
+        
+        LevelSettings settings = LevelManager.getLevel(0);
+        
+        screenManager.addScreen("game", ViewFactory.buildGameView(settings));
         screenManager.setScreen("game");
     }
 }
