@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'org.example'
-version = '1.0-SNAPSHOT'
+version = '1.0'
 
 repositories {
     mavenCentral()
@@ -43,7 +43,7 @@ jlink {
 
         imageName = 'SnakeAdventure'
 
-        icon = 'src/main/resources/images/icon.ico'
+        icon = 'src/main/resources/org/example/images/icon.ico'
 
         skipInstaller = true
     }
