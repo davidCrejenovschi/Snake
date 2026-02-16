@@ -28,7 +28,7 @@ public class LevelManager {
             Color.web("#89CFF0"), 
             Color.web("#0096FF"), 
             Color.web("#0047AB"), 
-            Color.web("#59DEFF")
+            Color.web("#3483eb")
         ));
     }
 
