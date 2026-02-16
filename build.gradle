@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'application'
     id 'org.openjfx.javafxplugin' version '0.1.0'
+    id 'org.beryx.jlink' version '2.25.0'
 }
 
 group = 'org.example'
@@ -28,4 +29,22 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+jlink {
+
+    options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
+
+    launcher {
+        name = 'SnakeAdventure'
+    }
+
+    jpackage {
+
+        imageName = 'SnakeAdventure'
+
+        icon = 'src/main/resources/images/icon.ico'
+
+        skipInstaller = true
+    }
 }
