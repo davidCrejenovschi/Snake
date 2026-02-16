@@ -9,7 +9,7 @@
 
 ---
 
-**Snake Adventure** is a classic arcade game implementation developed in Java using the JavaFX framework. It features a clean UI, smooth gameplay mechanics, and a modular architecture.
+**Snake Adventure** is a classic arcade game implementation developed in Java using the JavaFX framework. It features a clean UI, multiple levels with different themes, and a modular architecture.
 
 ---
 
