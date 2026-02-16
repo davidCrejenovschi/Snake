@@ -18,6 +18,6 @@ All sound effects are used under the **[Mixkit Free License](https://mixkit.co/f
 
 ---
 
-## 📜 About this Project
-This is a **non-commercial, educational project** created to explore GUI development with JavaFX, FXML styling, and CSS integration. It follows a modular structure and was built from scratch to demonstrate core programming principles in a game environment.
+## 📖 About this Project
+This is a **non-commercial, educational project** created to explore GUI development with JavaFX, FXML styling, and CSS integration.
 
