@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+
+<StackPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml"
+           fx:controller="org.example.controllers.GameOverController"
+           styleClass="game-over-root">
+
+     <VBox fx:id="contentBox" alignment="CENTER" fillWidth="false">
+          <Label fx:id="titleLabel" text="GAME OVER" styleClass="game-over-title" />
+
+          <Button fx:id="retryButton" text="TRY AGAIN" onAction="#onRetryButtonClicked" styleClass="game-over-btn" />
+          <Button fx:id="homeButton" text="HOME" onAction="#onHomeButtonClicked" styleClass="game-over-btn" />
+     </VBox>
+
+</StackPane>

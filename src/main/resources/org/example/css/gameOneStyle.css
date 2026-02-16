@@ -1,0 +1,12 @@
+#rootPane {
+    -fx-background-color: radial-gradient(focus-angle 0deg, focus-distance 0%, center 50% 50%, radius 100%, #1a2e1a 0%, #000500 100%);
+}
+
+#gameCanvas {
+
+    -fx-effect: dropshadow(three-pass-box, rgba(46, 204, 113, 0.5), 40, 0.3, 0, 0);
+}
+
+#overlayLayer {
+    -fx-background-color: rgba(0, 0, 0, 0.6);
+}

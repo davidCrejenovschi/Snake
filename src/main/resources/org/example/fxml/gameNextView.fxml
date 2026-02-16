@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+
+<StackPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml"
+           fx:controller="org.example.controllers.GameNextController"
+           styleClass="game-next-root">
+
+    <VBox fx:id="contentBox" alignment="CENTER" fillWidth="false">
+        <Label fx:id="titleLabel" text="LEVEL COMPLETE" styleClass="game-next-title" />
+        <Button fx:id="nextButton" text="NEXT LEVEL" onAction="#onNextButtonClicked" styleClass="game-next-btn" />
+        <Button fx:id="homeButton" text="HOME" onAction="#onHomeButtonClicked" styleClass="game-next-btn" />
+    </VBox>
+</StackPane>

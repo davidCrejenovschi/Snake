@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+
+<StackPane xmlns:fx="http://javafx.com/fxml" 
+           fx:controller="org.example.controllers.GameWonController"
+           fx:id="rootPane"
+           styleClass="game-won-overlay">
+
+    <VBox fx:id="contentBox" alignment="CENTER" styleClass="victory-card">
+        
+        <Label fx:id="titleLabel" text="THE VULCANO" styleClass="congrats-message"/>
+        <Label fx:id="subtitleLabel" text="Coming soon..." styleClass="sub-message"/>
+        
+        <Button fx:id="homeButton" text="HOME" onAction="#onHomeButtonClicked" styleClass="home-button" />
+        
+    </VBox>
+
+</StackPane>

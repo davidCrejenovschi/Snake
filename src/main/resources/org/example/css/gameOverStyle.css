@@ -1,0 +1,36 @@
+.game-over-root {
+    -fx-background-color: rgba(0, 0, 0, 0.75);
+}
+
+.game-over-title {
+    -fx-text-fill: white;
+    -fx-font-family: "Arial Black", "System Bold", "Verdana";
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.9), 10, 0, 0, 0);
+    -fx-alignment: center;
+}
+
+.game-over-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-font-family: "Arial", "System";
+    -fx-font-weight: bold;
+    -fx-border-color: white;
+    -fx-border-width: 2px;
+    -fx-background-radius: 50;
+    -fx-border-radius: 50;
+    -fx-cursor: hand;
+    -fx-alignment: center;
+}
+
+.game-over-btn:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.2);
+    -fx-effect: dropshadow(three-pass-box, rgba(255,255,255,0.5), 10, 0, 0, 0);
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+}
+
+.game-over-btn:pressed {
+    -fx-background-color: rgba(255, 255, 255, 0.4);
+    -fx-scale-x: 0.96;
+    -fx-scale-y: 0.96;
+}

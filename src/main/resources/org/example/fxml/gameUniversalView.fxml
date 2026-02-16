@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.canvas.Canvas?>
+
+<StackPane fx:id="rootPane"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="org.example.controllers.GameLevelController">
+
+    <Canvas fx:id="gameCanvas"/>
+    <StackPane fx:id="overlayLayer" visible="false" mouseTransparent="true" />
+
+</StackPane>

@@ -1,0 +1,50 @@
+#rootPane {
+    -fx-background-color: radial-gradient(focus-angle 0deg, focus-distance 0%, center 50% 50%, radius 100%, #3d0a0a 0%, #050000 100%);
+}
+
+.game-won-overlay {
+    -fx-background-color: rgba(0, 0, 0, 0.4);
+}
+
+.victory-card {
+    -fx-background-color: rgba(20, 5, 5, 0.75);
+    -fx-background-radius: 40;
+    -fx-border-color: linear-gradient(to bottom right, #ff4500, #3d0a0a);
+    -fx-border-radius: 40;
+    -fx-border-width: 3;
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 69, 0, 0.4), 50, 0.4, 0, 0);
+}
+
+.congrats-message {
+    -fx-font-family: "Segoe UI Black";
+    -fx-text-fill: linear-gradient(to bottom, #ffae00, #ff4500);
+    -fx-fill: linear-gradient(to bottom, #ffae00, #ff4500);
+    -fx-stroke: rgba(255, 255, 255, 0.1);
+    -fx-stroke-width: 1;
+    -fx-effect: dropshadow(gaussian, #ff0000, 15, 0.5, 0, 0);
+}
+
+.sub-message {
+    -fx-font-family: "Segoe UI Bold";
+    -fx-text-fill: #ffcc00;
+    -fx-fill: #ffcc00;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.8), 5, 0, 0, 2);
+}
+
+.home-button {
+    -fx-background-color: #e74c3c;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 50; 
+    -fx-cursor: hand;
+    -fx-background-insets: 0;
+    -fx-padding: 0; 
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 10, 0, 0, 5);
+}
+
+.home-button:hover {
+    -fx-background-color: #c0392b;
+    -fx-scale-x: 1.05; 
+    -fx-scale-y: 1.05;
+    -fx-effect: dropshadow(three-pass-box, rgba(231, 76, 60, 0.8), 20, 0.3, 0, 0);
+}
