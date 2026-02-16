@@ -4,7 +4,7 @@
 ![JavaFX](https://img.shields.io/badge/Framework-JavaFX-blue?logo=java)
 ![Gradle](https://img.shields.io/badge/Build-Gradle-02303A?logo=gradle)
 
-### 📦 Supported Platforms
+## 📦 Supported Platforms
 - **Windows:** `.exe` 
 
 ---
