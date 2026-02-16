@@ -13,11 +13,7 @@
 
 ---
 
-## 🎵 Sound License
-All sound effects are used under the **[Mixkit Free License](https://mixkit.co/free-sound-effects/)**, which allows for use in personal and non-commercial projects.
-
----
-
-## 📖 About this Project
-This is a **non-commercial, educational project** created to explore GUI development with JavaFX, FXML styling, and CSS integration.
+## 📜 Credits & License
+All sound effects are used under the **[Mixkit Free License](https://mixkit.co/free-sound-effects/)**, which allows for use in personal and non-commercial projects, like this one.
+Created for **learning purposes** only.
 
