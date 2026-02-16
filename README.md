@@ -5,7 +5,11 @@
 ![Gradle](https://img.shields.io/badge/Build-Gradle-02303A?logo=gradle)
 
 ### 📦 Supported Platforms
-- **Windows:** `.exe` (Portable)
+- **Windows:** `.exe` 
+
+---
+
+**Snake Adventure** is a classic arcade game implementation developed in Java using the JavaFX framework. It features a clean UI, smooth gameplay mechanics, and a modular architecture.
 
 ---
 
