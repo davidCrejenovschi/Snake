@@ -14,9 +14,7 @@
 ---
 
 ## 🎵 Sound License
-The sound effects used in this project are sourced from **Mixkit**.
-
-- **Sound License:** All sound effects are used under the **[Mixkit Free License](https://mixkit.co/free-sound-effects/)**, which allows for use in personal and non-commercial projects.
+All sound effects are used under the **[Mixkit Free License](https://mixkit.co/free-sound-effects/)**, which allows for use in personal and non-commercial projects.
 
 ---
 
