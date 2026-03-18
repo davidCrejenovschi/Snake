@@ -3,15 +3,15 @@ package org.example.ai;
 import org.example.utils.GameEngine;
 import java.io.*;
 import java.net.Socket;
+import java.util.Arrays;
 
 public class AiClient {
     private static final String HOST = "127.0.0.1";
     private static final int PORT = 65432;
 
     public static void main(String[] args) {
-        System.out.println("[*] Pornește robotul de antrenament Java...");
+        System.out.println("[*] Pornește robotul de antrenament Java (RADAR)...");
 
-        // Bucla care rulează meciuri la infinit
         int numarMeci = 1;
         while (true) {
             GameEngine engine = new GameEngine(10);
@@ -20,15 +20,12 @@ public class AiClient {
                  PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                  BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
 
-                // Bucla unui singur meci
                 while (!engine.isGameOver() && !engine.isLevelWon()) {
+                    double[] radar = getRadarDistances(engine);
+
                     String stateJson = String.format(
-                            "{\"head_x\": %d, \"head_y\": %d, \"food_x\": %d, \"food_y\": %d, \"grid_size\": %d, \"game_over\": %b, \"ate_food\": %b}",
-                            engine.getSnake().getHead().getX(),
-                            engine.getSnake().getHead().getY(),
-                            engine.getFood().getX(),
-                            engine.getFood().getY(),
-                            engine.getNumberOfLines(),
+                            "{\"radar\": %s, \"game_over\": %b, \"ate_food\": %b}",
+                            Arrays.toString(radar),
                             engine.isGameOver(),
                             engine.didJustEat()
                     );
@@ -42,7 +39,6 @@ public class AiClient {
                     applyAction(engine, action);
                 }
 
-                System.out.println("Meciul " + numarMeci + " terminat. Scor: " + engine.getSnake().getBody().size());
                 numarMeci++;
 
             } catch (IOException e) {
@@ -52,12 +48,67 @@ public class AiClient {
         }
     }
 
+    private static double[] getRadarDistances(GameEngine engine) {
+        double[] radar = new double[24];
+        int[][] directions = {
+                {0, -1}, {0, 1}, {-1, 0}, {1, 0},
+                {-1, -1}, {-1, 1}, {1, -1}, {1, 1}
+        };
+
+        int headX = engine.getSnake().getHead().getX();
+        int headY = engine.getSnake().getHead().getY();
+        int foodX = engine.getFood().getX();
+        int foodY = engine.getFood().getY();
+        int gridSize = engine.getNumberOfLines();
+
+        for (int i = 0; i < 8; i++) {
+            int dx = directions[i][0];
+            int dy = directions[i][1];
+            int cx = headX;
+            int cy = headY;
+            double distance = 0;
+            boolean foodFound = false;
+            boolean bodyFound = false;
+
+            while (true) {
+                cx += dx;
+                cy += dy;
+                distance++;
+
+                if (cx < 0 || cy < 0 || cx >= gridSize || cy >= gridSize) {
+                    radar[i] = 1.0 / distance;
+                    break;
+                }
+
+                if (!foodFound && cx == foodX && cy == foodY) {
+                    radar[8 + i] = 1.0 / distance;
+                    foodFound = true;
+                }
+
+                if (!bodyFound && isPartOfSnakeBody(engine, cx, cy)) {
+                    radar[16 + i] = 1.0 / distance;
+                    bodyFound = true;
+                }
+            }
+        }
+        return radar;
+    }
+
+    private static boolean isPartOfSnakeBody(GameEngine engine, int x, int y) {
+        for (var segment : engine.getSnake().getBody()) {
+            if (segment.getX() == x && segment.getY() == y) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static void applyAction(GameEngine engine, int action) {
         switch (action) {
-            case 0 -> engine.move(0, -1); // UP
-            case 1 -> engine.move(0, 1);  // DOWN
-            case 2 -> engine.move(-1, 0); // LEFT
-            case 3 -> engine.move(1, 0);  // RIGHT
+            case 0 -> engine.move(0, -1);
+            case 1 -> engine.move(0, 1);
+            case 2 -> engine.move(-1, 0);
+            case 3 -> engine.move(1, 0);
         }
     }
 }

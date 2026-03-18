@@ -3,89 +3,86 @@ from gymnasium import spaces
 import numpy as np
 import socket
 import json
+import os
 from stable_baselines3 import PPO
+from stable_baselines3.common.monitor import Monitor
 
-class SnakeJavaEnv(gym.Env):
-    """Mediu customizat care comunică cu jocul tău Java"""
-
+class SnakeJavaRadarEnv(gym.Env):
     def __init__(self):
-        super(SnakeJavaEnv, self).__init__()
+        super(SnakeJavaRadarEnv, self).__init__()
 
-        # 4 acțiuni posibile (0=Sus, 1=Jos, 2=Stânga, 3=Dreapta)
+        # 4 acțiuni: 0=Sus, 1=Jos, 2=Stânga, 3=Dreapta (adaptează dacă ale tale sunt altfel)
         self.action_space = spaces.Discrete(4)
 
-        # Ce vede AI-ul: 4 numere (head_x, head_y, food_x, food_y).
-        # Presupunem o grilă de maxim 100x100
-        self.observation_space = spaces.Box(low=0, high=100, shape=(4,), dtype=np.float32)
+        # ACUM AVEM 24 DE INTRĂRI! Toate sunt valori între 0.0 și 1.0
+        self.observation_space = spaces.Box(low=0.0, high=1.0, shape=(24,), dtype=np.float32)
 
-        # Setup Server Socket
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server_socket.bind(('127.0.0.1', 65432))
         self.server_socket.listen()
-
         self.conn = None
 
     def reset(self, seed=None, options=None):
-        """Se apelează la începutul fiecărui meci nou"""
         super().reset(seed=seed)
-
-        if self.conn:
-            self.conn.close()
-
-        # Așteptăm ca Java să pornească un meci nou
+        if self.conn: self.conn.close()
         self.conn, addr = self.server_socket.accept()
 
-        # Citim prima stare a tablei
-        data = self.conn.recv(1024)
+        data = self.conn.recv(2048) # Mărim buffer-ul pentru că JSON-ul e mai lung acum
+        if not data: return np.zeros(24, dtype=np.float32), {}
+
         state_dict = json.loads(data.decode('utf-8').strip())
 
-        obs = np.array([state_dict['head_x'], state_dict['head_y'],
-                        state_dict['food_x'], state_dict['food_y']], dtype=np.float32)
+        # Luăm lista "radar" direct din JSON și o facem Numpy Array
+        obs = np.array(state_dict['radar'], dtype=np.float32)
         return obs, {}
 
     def step(self, action):
-        """Trimite mutarea către Java și analizează rezultatul"""
-        # Trimite acțiunea către Java
         self.conn.sendall(f"{action}\n".encode('utf-8'))
+        data = self.conn.recv(2048)
 
-        # Așteaptă răspunsul (noua stare)
-        data = self.conn.recv(1024)
-        if not data:
-            # Dacă Java s-a deconectat brusc
-            return np.zeros(4, dtype=np.float32), 0, True, False, {}
+        if not data: return np.zeros(24, dtype=np.float32), 0, True, False, {}
 
         state_dict = json.loads(data.decode('utf-8').strip())
-
-        obs = np.array([state_dict['head_x'], state_dict['head_y'],
-                        state_dict['food_x'], state_dict['food_y']], dtype=np.float32)
+        obs = np.array(state_dict['radar'], dtype=np.float32)
 
         terminated = state_dict['game_over']
 
-        # --- SISTEMUL DE RECOMPENSE (Aici învață AI-ul!) ---
+        # Sistemul de Recompense
         reward = 0
         if terminated:
-            reward = -10.0  # Pedeapsă uriașă pentru că a intrat în zid
+            reward = -10.0
         elif state_dict['ate_food']:
-            reward = 10.0   # Recompensă mare pentru că a mâncat
+            reward = 10.0
         else:
-            reward = -0.01  # Pedeapsă mică pentru fiecare pas în gol (ca să îl forțăm să se grăbească)
+            reward = -0.01 # Penalizare mică ca să nu se învârtă în cerc
 
         return obs, reward, terminated, False, {}
 
+# --- MOTORUL DE ANTRENAMENT ---
 if __name__ == "__main__":
-    print("--- PREGĂTIRE MEDIU DE ANTRENAMENT ---")
-    env = SnakeJavaEnv()
+    log_dir = "logs/tensorboard/"
+    os.makedirs(log_dir, exist_ok=True)
 
-    # Inițializăm algoritmul PPO
-    model = PPO("MlpPolicy", env, verbose=1)
+    # 1. Inițializăm mediul cu Radar
+    raw_env = SnakeJavaRadarEnv()
+    env = Monitor(raw_env, log_dir)
 
-    print("--- START ANTRENAMENT ---")
-    print("Pornește AiClient.main() din Java acum!")
+    # 2. VERIFICĂM DACĂ EXISTĂ UN CREIER VECHI
+    model_path = "expert_snake_radar.zip"
+    if os.path.exists(model_path):
+        print("[*] SUPER! Am găsit creierul vechi. Continuăm studiile de unde am rămas...")
+        # Încărcăm modelul și îl conectăm la noul mediu
+        model = PPO.load("expert_snake_radar", env=env, tensorboard_log=log_dir)
+    else:
+        print("[*] Nu am găsit creierul vechi. Începem antrenamentul de la ZERO...")
+        model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_dir)
 
-    # AI-ul va juca 100.000 de mutări (aproximativ câteva sute/mii de meciuri)
-    model.learn(total_timesteps=100000)
+    print("--- START ANTRENAMENT RADAR (500k PAȘI) ---")
+
+    # Antrenăm! 500.000 de pași ar trebui să fie suficienți ca să vezi un geniu acum.
+    model.learn(total_timesteps=500000, reset_num_timesteps=False)
 
     print("--- ANTRENAMENT FINALIZAT ---")
-    model.save("expert_snake")
-    print("Creierul a fost salvat în 'expert_snake.zip'!")
+    model.save("expert_snake_radar")
+    print("Noul creier a fost salvat ca 'expert_snake_radar.zip'!")

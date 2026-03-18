@@ -53,6 +53,8 @@ public class GameLevelController {
     private AiBrain aiBrain;
     private Timeline aiLoop;
 
+    private int level;
+
     @FXML
     public void initialize() {
         gameRenderer.init(gameCanvas.getGraphicsContext2D());
@@ -80,6 +82,8 @@ public class GameLevelController {
         if (aiBrain != null) {
             aiBrain.disconnect();
         }
+
+        level = settings.getLevelNumber();
 
         if (settings.getCssPath() != null) {
             try {
@@ -224,7 +228,7 @@ public class GameLevelController {
 
         Coordinate2D<Integer> food = engine.getFood();
         if (food != null) {
-            if (lines == 2) {
+            if (level == 1) {
                 gameRenderer.drawPear(spacing, food.getX(), food.getY());
             } else {
                 gameRenderer.drawLilyPad(spacing, food.getX(), food.getY());
@@ -234,7 +238,7 @@ public class GameLevelController {
 
     private void startAiLoop() {
         // Acest ceas va ticăi la fiecare 150 de milisecunde (viteza șarpelui)
-        aiLoop = new Timeline(new KeyFrame(Duration.millis(1000), event -> {
+        aiLoop = new Timeline(new KeyFrame(Duration.millis(150), event -> {
             if (engine == null || engine.isGameOver() || engine.isLevelWon()) {
                 aiLoop.stop(); // Oprim bucla dacă s-a terminat jocul
                 return;
