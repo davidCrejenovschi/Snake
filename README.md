@@ -23,4 +23,43 @@
 All sound effects are used under the **[Mixkit Free License](https://mixkit.co/free-sound-effects/)**, which allows for use in personal and non-commercial projects, like this one.
 Created for **learning purposes** only.
 
+---
+
+## 🛠️ Local Development Setup
+
+Follow these steps to set up and run this project using **IntelliJ IDEA**.
+
+### 1. Clone the Repository
+Open your terminal and run these commands:
+
+```bash
+git clone [https://github.com/davidCrejenovschi/YourProjectName.git](https://github.com/davidCrejenovschi/YourProjectName.git)
+```
+
+```bash
+cd YourProjectName
+```
+
+### 2. Open in IntelliJ IDEA
+1. Launch IntelliJ IDEA.
+2. Select **Open** and navigate to the cloned project folder.
+3. Select the `build.gradle` file and click **Open as Project**.
+4. Wait for IntelliJ to automatically download Gradle and finish the sync.
+
+### 3. Run the Application
+You can run the project directly from the terminal using the Gradle wrapper.
+
+**On Windows:**
+```bash
+.\gradlew.bat run
+```
+
+**On macOS / Linux:**
+```bash
+chmod +x gradlew
+```
+
+```bash
+./gradlew run
+```
 
