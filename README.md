@@ -21,6 +21,7 @@
 
 ## 📜 Credits & License
 All sound effects are used under the **[Mixkit Free License](https://mixkit.co/free-sound-effects/)**, which allows for use in personal and non-commercial projects, like this one.
+_GIF created using [VEED.io](https://www.veed.io/)._
 Created for **learning purposes** only.
 
 ---
