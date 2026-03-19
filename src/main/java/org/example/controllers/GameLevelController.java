@@ -12,16 +12,16 @@ import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import org.example.SceneFactory;
 import org.example.ScreenManager;
-import org.example.ai.AiBrain;
 import org.example.utils.*;
-import org.example.utils.GameEngine;
-import org.example.utils.Coordinate2D;
-import org.example.utils.LevelSettings;
-import org.example.utils.SoundManager;
-
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
 import java.util.Objects;
+import org.example.ai.NeuralNetwork;
 
 public class GameLevelController {
+
+    // Am adăugat un flag static simplu pe care îl poți schimba din HomeMenuController
+    public static boolean isAiMode = false;
 
     private class LayoutHandler implements ChangeListener<Number> {
         @Override
@@ -50,7 +50,7 @@ public class GameLevelController {
     private double dragStartX;
     private double dragStartY;
 
-    private AiBrain aiBrain;
+    private NeuralNetwork aiBrain; // Acum folosim rețeaua noastră pură în Java
     private Timeline aiLoop;
 
     private int level;
@@ -75,12 +75,8 @@ public class GameLevelController {
     }
 
     public void startLevel(LevelSettings settings) {
-
         if (aiLoop != null) {
             aiLoop.stop();
-        }
-        if (aiBrain != null) {
-            aiBrain.disconnect();
         }
 
         level = settings.getLevelNumber();
@@ -105,22 +101,30 @@ public class GameLevelController {
         engine = new GameEngine(settings.getNumberOfLines());
         render();
 
-        engine = new GameEngine(settings.getNumberOfLines());
-        render();
-
-        if (org.example.utils.AiManager.isAiEnabled) {
-            aiBrain = new AiBrain();
-            if (aiBrain.connect()) {
+        // Dacă e modul AI, încărcăm campionul de pe disc
+        if (isAiMode) {
+            loadAiBrain("campion_4x4.dat"); // Numele fișierului salvat la evoluție
+            if (aiBrain != null) {
                 startAiLoop();
+            } else {
+                System.err.println("[!] Nu s-a putut porni AI-ul. Lipseste fisierul campionului.");
             }
+        }
+    }
+
+    private void loadAiBrain(String filePath) {
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(filePath))) {
+            aiBrain = (NeuralNetwork) in.readObject();
+            System.out.println("[*] Creierul AI a fost incarcat cu succes!");
+        } catch (Exception e) {
+            aiBrain = null;
+            System.err.println("[!] Eroare la incarcarea fisierului .dat: " + e.getMessage());
         }
     }
 
     private void attachKeyEvent(Scene scene) {
         scene.setOnKeyPressed(event -> {
-
-            if (org.example.utils.AiManager.isAiEnabled) return;
-
+            if (isAiMode) return; // Dacă joacă AI-ul, blocăm tastatura
             if (engine == null || engine.isGameOver() || engine.isLevelWon()) return;
 
             boolean moved = false;
@@ -151,12 +155,13 @@ public class GameLevelController {
 
     private void attachSwipeEvent(Scene scene) {
         scene.setOnMousePressed(event -> {
+            if (isAiMode) return;
             dragStartX = event.getSceneX();
             dragStartY = event.getSceneY();
         });
 
         scene.setOnMouseReleased(event -> {
-            if (engine == null || engine.isGameOver() || engine.isLevelWon()) return;
+            if (isAiMode || engine == null || engine.isGameOver() || engine.isLevelWon()) return;
 
             double dragEndX = event.getSceneX();
             double dragEndY = event.getSceneY();
@@ -198,9 +203,7 @@ public class GameLevelController {
 
     private void checkGameState() {
         if (engine.isGameOver() || engine.isLevelWon()) {
-            // OPRIM AI-ul IMEDIAT
             if (aiLoop != null) aiLoop.stop();
-            if (aiBrain != null) aiBrain.disconnect();
 
             if (engine.isGameOver()) {
                 SoundManager.playGameOver();
@@ -237,17 +240,20 @@ public class GameLevelController {
     }
 
     private void startAiLoop() {
-        // Acest ceas va ticăi la fiecare 150 de milisecunde (viteza șarpelui)
-        aiLoop = new Timeline(new KeyFrame(Duration.millis(150), event -> {
+        // Am pus 100ms pentru a fi ușor vizibil cum gândește. Poți modifica pentru viteză!
+        aiLoop = new Timeline(new KeyFrame(Duration.millis(100), event -> {
             if (engine == null || engine.isGameOver() || engine.isLevelWon()) {
-                aiLoop.stop(); // Oprim bucla dacă s-a terminat jocul
+                aiLoop.stop();
                 return;
             }
 
-            int action = aiBrain.getBestMove(engine);
-            boolean moved = false;
+            // 1. Extragem matricea jocului curent
+            double[] vision = getFlattenedGrid(engine);
 
-            // Mapăm deciziile AI-ului pe logica ta de joc
+            // 2. Creierul prezice mutarea (0=Sus, 1=Jos, 2=Stânga, 3=Dreapta)
+            int action = aiBrain.predict(vision);
+
+            boolean moved = false;
             switch (action) {
                 case 0 -> { engine.getSnake().setDirection("up"); engine.move(0, -1); moved = true; }
                 case 1 -> { engine.getSnake().setDirection("down"); engine.move(0, 1); moved = true; }
@@ -261,7 +267,36 @@ public class GameLevelController {
             }
         }));
 
-        aiLoop.setCycleCount(Timeline.INDEFINITE); // Rulează la infinit
-        aiLoop.play(); // Pornește animația
+        aiLoop.setCycleCount(Timeline.INDEFINITE);
+        aiLoop.play();
+    }
+
+    // --- FUNCTIILE DE VIZIUNE PENTRU REȚEAUA NEURONALĂ ---
+
+    private double[] getFlattenedGrid(GameEngine e) {
+        int gridSize = e.getNumberOfLines();
+        double[] grid = new double[gridSize * gridSize];
+        int headX = e.getSnake().getHead().getX();
+        int headY = e.getSnake().getHead().getY();
+        int foodX = e.getFood().getX();
+        int foodY = e.getFood().getY();
+
+        for (int y = 0; y < gridSize; y++) {
+            for (int x = 0; x < gridSize; x++) {
+                int index = y * gridSize + x;
+                if (x == headX && y == headY) grid[index] = 0.5;
+                else if (x == foodX && y == foodY) grid[index] = 1.0;
+                else if (isPartOfSnakeBody(e, x, y)) grid[index] = -1.0;
+                else grid[index] = 0.0;
+            }
+        }
+        return grid;
+    }
+
+    private boolean isPartOfSnakeBody(GameEngine e, int x, int y) {
+        for (var segment : e.getSnake().getBody()) {
+            if (segment.getX() == x && segment.getY() == y) return true;
+        }
+        return false;
     }
 }
