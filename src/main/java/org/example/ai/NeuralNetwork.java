@@ -4,9 +4,10 @@ import java.io.Serializable;
 import java.util.Random;
 
 public class NeuralNetwork implements Serializable {
-    private int inputNodes = 16;   // 4x4 grid
-    private int hiddenNodes = 12;  // Un strat intermediar
-    private int outputNodes = 4;   // Sus, Jos, Stânga, Dreapta
+
+    private int inputNodes = 11;   // Cei 11 senzori recomandați
+    private int hiddenNodes = 24;  // Suficient pentru a extrage tipare pe 4x4
+    private int outputNodes = 3;   // Merge Înainte, Viraj Dreapta, Viraj Stânga
 
     private double[][] weightsIH; // Input to Hidden
     private double[][] weightsHO; // Hidden to Output

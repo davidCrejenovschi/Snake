@@ -20,8 +20,8 @@ import org.example.ai.NeuralNetwork;
 
 public class GameLevelController {
 
-    // Am adăugat un flag static simplu pe care îl poți schimba din HomeMenuController
     public static boolean isAiMode = false;
+    private int movesSinceLastApple = 0;
 
     private class LayoutHandler implements ChangeListener<Number> {
         @Override
@@ -50,7 +50,7 @@ public class GameLevelController {
     private double dragStartX;
     private double dragStartY;
 
-    private NeuralNetwork aiBrain; // Acum folosim rețeaua noastră pură în Java
+    private NeuralNetwork aiBrain;
     private Timeline aiLoop;
 
     private int level;
@@ -101,9 +101,8 @@ public class GameLevelController {
         engine = new GameEngine(settings.getNumberOfLines());
         render();
 
-        // Dacă e modul AI, încărcăm campionul de pe disc
         if (isAiMode) {
-            loadAiBrain("campion_4x4.dat"); // Numele fișierului salvat la evoluție
+            loadAiBrain("campion_4x4.dat");
             if (aiBrain != null) {
                 startAiLoop();
             } else {
@@ -124,7 +123,7 @@ public class GameLevelController {
 
     private void attachKeyEvent(Scene scene) {
         scene.setOnKeyPressed(event -> {
-            if (isAiMode) return; // Dacă joacă AI-ul, blocăm tastatura
+            if (isAiMode) return;
             if (engine == null || engine.isGameOver() || engine.isLevelWon()) return;
 
             boolean moved = false;
@@ -240,63 +239,145 @@ public class GameLevelController {
     }
 
     private void startAiLoop() {
-        // Am pus 100ms pentru a fi ușor vizibil cum gândește. Poți modifica pentru viteză!
+        movesSinceLastApple = 0;
+
+        // Ticăie la fiecare 100ms
         aiLoop = new Timeline(new KeyFrame(Duration.millis(100), event -> {
             if (engine == null || engine.isGameOver() || engine.isLevelWon()) {
                 aiLoop.stop();
                 return;
             }
 
-            // 1. Extragem matricea jocului curent
-            double[] vision = getFlattenedGrid(engine);
+            double[] state = getState(engine);
+            int action = aiBrain.predict(state);
 
-            // 2. Creierul prezice mutarea (0=Sus, 1=Jos, 2=Stânga, 3=Dreapta)
-            int action = aiBrain.predict(vision);
+            int sizeBefore = engine.getSnake().getBody().size();
+            applyRelativeAction(action);
 
-            boolean moved = false;
-            switch (action) {
-                case 0 -> { engine.getSnake().setDirection("up"); engine.move(0, -1); moved = true; }
-                case 1 -> { engine.getSnake().setDirection("down"); engine.move(0, 1); moved = true; }
-                case 2 -> { engine.getSnake().setDirection("left"); engine.move(-1, 0); moved = true; }
-                case 3 -> { engine.getSnake().setDirection("right"); engine.move(1, 0); moved = true; }
+            if (engine.getSnake().getBody().size() > sizeBefore) {
+                movesSinceLastApple = 0;
+            } else {
+                movesSinceLastApple++;
             }
 
-            if (moved) {
-                checkGameState();
-                render();
+            // Folosim aceeași limită de înfometare ca la antrenament (GridSize * GridSize)
+            int limit = engine.getNumberOfLines() * engine.getNumberOfLines();
+            if (movesSinceLastApple > limit) {
+                System.out.println("[!] AI-ul a intrat în Safe Loop (Înfometare). Executat pentru pierdere de timp!");
+                aiLoop.stop();
+                SoundManager.playGameOver();
+                ScreenManager.getInstance().openOverlay(SceneFactory.getGameOverOverlay());
+                return;
             }
+
+            checkGameState();
+            render();
         }));
 
         aiLoop.setCycleCount(Timeline.INDEFINITE);
         aiLoop.play();
     }
 
-    // --- FUNCTIILE DE VIZIUNE PENTRU REȚEAUA NEURONALĂ ---
-
-    private double[] getFlattenedGrid(GameEngine e) {
-        int gridSize = e.getNumberOfLines();
-        double[] grid = new double[gridSize * gridSize];
+    private double[] getState(GameEngine e) {
         int headX = e.getSnake().getHead().getX();
         int headY = e.getSnake().getHead().getY();
         int foodX = e.getFood().getX();
         int foodY = e.getFood().getY();
+        String currentDir = e.getSnake().getDirection();
 
-        for (int y = 0; y < gridSize; y++) {
-            for (int x = 0; x < gridSize; x++) {
-                int index = y * gridSize + x;
-                if (x == headX && y == headY) grid[index] = 0.5;
-                else if (x == foodX && y == foodY) grid[index] = 1.0;
-                else if (isPartOfSnakeBody(e, x, y)) grid[index] = -1.0;
-                else grid[index] = 0.0;
-            }
+        double dirUp = currentDir.equals("up") ? 1.0 : 0.0;
+        double dirDown = currentDir.equals("down") ? 1.0 : 0.0;
+        double dirLeft = currentDir.equals("left") ? 1.0 : 0.0;
+        double dirRight = currentDir.equals("right") ? 1.0 : 0.0;
+
+        Coordinate2D<Integer> pointUp = new Coordinate2D<>(headX, headY - 1);
+        Coordinate2D<Integer> pointDown = new Coordinate2D<>(headX, headY + 1);
+        Coordinate2D<Integer> pointLeft = new Coordinate2D<>(headX - 1, headY);
+        Coordinate2D<Integer> pointRight = new Coordinate2D<>(headX + 1, headY);
+
+        boolean dangerUp = isCollision(e, pointUp);
+        boolean dangerDown = isCollision(e, pointDown);
+        boolean dangerLeft = isCollision(e, pointLeft);
+        boolean dangerRight = isCollision(e, pointRight);
+
+        double dangerStraight = 0.0, dangerTurnLeft = 0.0, dangerTurnRight = 0.0;
+
+        if (dirUp == 1.0) {
+            dangerStraight = dangerUp ? 1.0 : 0.0;
+            dangerTurnRight = dangerRight ? 1.0 : 0.0;
+            dangerTurnLeft = dangerLeft ? 1.0 : 0.0;
+        } else if (dirDown == 1.0) {
+            dangerStraight = dangerDown ? 1.0 : 0.0;
+            dangerTurnRight = dangerLeft ? 1.0 : 0.0;
+            dangerTurnLeft = dangerRight ? 1.0 : 0.0;
+        } else if (dirLeft == 1.0) {
+            dangerStraight = dangerLeft ? 1.0 : 0.0;
+            dangerTurnRight = dangerUp ? 1.0 : 0.0;
+            dangerTurnLeft = dangerDown ? 1.0 : 0.0;
+        } else if (dirRight == 1.0) {
+            dangerStraight = dangerRight ? 1.0 : 0.0;
+            dangerTurnRight = dangerDown ? 1.0 : 0.0;
+            dangerTurnLeft = dangerUp ? 1.0 : 0.0;
         }
-        return grid;
+
+        // ORDINUL EXACT CA ÎN SNAKEAGENT
+        return new double[]{
+                dangerStraight, dangerTurnLeft, dangerTurnRight, // 3 senzori pericol
+                dirUp, dirDown, dirLeft, dirRight,               // 4 senzori direcție curentă
+                foodX < headX ? 1.0 : 0.0, // Food is Left      // 4 senzori direcție mâncare
+                foodX > headX ? 1.0 : 0.0, // Food is Right
+                foodY < headY ? 1.0 : 0.0, // Food is Up
+                foodY > headY ? 1.0 : 0.0  // Food is Down
+        };
     }
 
-    private boolean isPartOfSnakeBody(GameEngine e, int x, int y) {
+    private boolean isCollision(GameEngine e, Coordinate2D<Integer> pt) {
+        if (pt.getX() < 0 || pt.getX() >= e.getNumberOfLines() || pt.getY() < 0 || pt.getY() >= e.getNumberOfLines()) {
+            return true;
+        }
         for (var segment : e.getSnake().getBody()) {
-            if (segment.getX() == x && segment.getY() == y) return true;
+            if (segment.getX().equals(pt.getX()) && segment.getY().equals(pt.getY())) {
+                return true;
+            }
         }
         return false;
+    }
+
+    private void applyRelativeAction(int action) {
+        String currentDir = engine.getSnake().getDirection();
+
+        if (action == 0) {
+            moveByDirection(currentDir);
+            return;
+        }
+
+        if (action == 1) { // Viraj Dreapta
+            switch (currentDir) {
+                case "up" -> moveByDirection("right");
+                case "down" -> moveByDirection("left");
+                case "left" -> moveByDirection("up");
+                case "right" -> moveByDirection("down");
+            }
+            return;
+        }
+
+        if (action == 2) { // Viraj Stânga
+            switch (currentDir) {
+                case "up" -> moveByDirection("left");
+                case "down" -> moveByDirection("right");
+                case "left" -> moveByDirection("down");
+                case "right" -> moveByDirection("up");
+            }
+        }
+    }
+
+    private void moveByDirection(String dir) {
+        engine.getSnake().setDirection(dir);
+        switch (dir) {
+            case "up" -> engine.move(0, -1);
+            case "down" -> engine.move(0, 1);
+            case "left" -> engine.move(-1, 0);
+            case "right" -> engine.move(1, 0);
+        }
     }
 }
