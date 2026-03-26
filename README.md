@@ -28,7 +28,7 @@ The AI system is powered by a custom-built **Feedforward Neural Network** optimi
 
 ---
 
-📁 **[Access the Technical Documentation DOCX here](assets/Snake AI Documentation.docx)**
+📁 **[Access the Technical Documentation DOCX here](assets/Snake_AI_Documentation.docx)**
 
 ---
 
