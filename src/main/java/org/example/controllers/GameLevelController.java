@@ -119,6 +119,10 @@ public class GameLevelController {
 
                     aiEnv.step(action);
 
+                    if (engine.didJustEat()) {
+                        SoundManager.playEat();
+                    }
+
                     render();
 
                     if (aiEnv.isDone()) {
