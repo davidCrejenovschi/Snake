@@ -32,6 +32,13 @@ The AI system is powered by a custom-built **Feedforward Neural Network** optimi
 
 ---
 
+### 📈 Learning Curve
+The graph below demonstrates the exponential growth of the AI's fitness score across generations, utilizing a logarithmic scale:
+
+![AI Fitness Variance and Progress](assets/graphic.png) 
+
+---
+
 ## 📜 Credits & License
 All sound effects are used under the **[Mixkit Free License](https://mixkit.co/free-sound-effects/)**, which allows for use in personal and non-commercial projects, like this one.
 _GIF created using [VEED.io](https://www.veed.io/)._
