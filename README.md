@@ -35,7 +35,9 @@ The AI system is powered by a custom-built **Feedforward Neural Network** optimi
 ### 📈 Learning Curve
 The graph below demonstrates the exponential growth of the AI's fitness score across generations, utilizing a logarithmic scale:
 
-![AI Fitness Variance and Progress](assets/graphic.png) 
+<p align="center">
+  <img src="assets/graphic.png" alt="Project Demo">
+</p> 
 
 ---
 
