@@ -101,7 +101,7 @@ public class GameLevelController {
                     startAiLoop();
                 }
             }
-            
+
         } else {
             Coordinate2D<Integer> head = engine.getSnake().getHead();
             Coordinate2D<Integer> tail = engine.getSnake().getTail();
