@@ -26,3 +26,25 @@
     -fx-scale-y: 1.05;
     -fx-effect: dropshadow(three-pass-box, rgba(46, 204, 113, 0.8), 20, 0.3, 0, 0);
 }
+
+
+.ai-toggle {
+    -fx-background-color: #e74c3c;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 20;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 10, 0, 0, 5);
+}
+
+.ai-toggle:selected {
+    -fx-background-color: #3498db;
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(three-pass-box, rgba(52, 152, 219, 0.8), 20, 0.3, 0, 0);
+}
+
+.start-button:disabled {
+    -fx-background-color: #7f8c8d; /* Un gri neutru */
+    -fx-text-fill: #bdc3c7;
+    -fx-cursor: wait; /* Schimbă mouse-ul într-un ceas/clepsidră */
+}

@@ -13,7 +13,7 @@ public class LevelManager {
        
         levels.add(new LevelSettings(
             1, 
-            2, 
+            3,
             "/org/example/css/gameOneStyle.css",
             Color.web("#c7e098"), 
             Color.web("#94a86d"), 
@@ -23,7 +23,7 @@ public class LevelManager {
 
         levels.add(new LevelSettings(
             2, 
-            3, 
+            4,
             "/org/example/css/gameTwoStyle.css",
             Color.web("#89CFF0"), 
             Color.web("#0096FF"), 

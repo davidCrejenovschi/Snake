@@ -1,8 +1,5 @@
 package org.example.controllers;
 
-import java.util.ArrayList;
-import java.util.Random;
-import javafx.animation.AnimationTimer;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
@@ -13,12 +10,13 @@ import javafx.scene.layout.StackPane;
 import org.example.SceneFactory;
 import org.example.ScreenManager;
 import org.example.utils.*;
+import java.util.Objects;
 
 
 public class GameLevelController {
 
+    public static boolean isAiMode = false;
     private class LayoutHandler implements ChangeListener<Number> {
-
         @Override
         public void changed(ObservableValue<? extends Number> obs, Number oldVal, Number newVal) {
             double orient = Math.min(rootPane.getHeight(), rootPane.getWidth());
@@ -26,68 +24,29 @@ public class GameLevelController {
             double side = orient * proportion;
             gameCanvas.setWidth(side);
             gameCanvas.setHeight(side);
-
-            javafx.application.Platform.runLater(() -> { render(); });
+            javafx.application.Platform.runLater(GameLevelController.this::render);
         }
     }
-    
     private final LayoutHandler layoutHandler = new LayoutHandler();
+    private javafx.animation.Timeline aiTimeline;
+    private org.example.ai.SnakeEnvironment aiEnv;
+    private org.example.ai.NeuralNetwork aiBrain;
 
     @FXML
     private StackPane rootPane;
     @FXML
-    private StackPane overlayLayer;
-    @FXML
     private Canvas gameCanvas;
 
-    private AnimationTimer gameLoop;
-    private GameRenderer gameRenderer = new GameRenderer();
-    
-    private int numberOfLines; 
-
-    private Snake snake = new Snake();
-    private Coordinate2D<Integer> food;
-    private ArrayList<Coordinate2D<Integer>> freeSpots = new ArrayList<>();
+    private final GameRenderer gameRenderer = new GameRenderer();
+    private GameEngine engine;
 
     private double dragStartX;
     private double dragStartY;
 
-    private void initFreeSpots() {
-        freeSpots.clear(); 
-        for (int i = 0; i <= numberOfLines; i++) {
-            for (int j = 0; j <= numberOfLines; j++) {
-                freeSpots.add(new Coordinate2D<>(i, j));
-            }
-        }
-    }
+    private int lastDx = 0;
+    private int lastDy = 0;
 
-    private Coordinate2D<Integer> chooseFreeSpot(){
-        if(freeSpots.isEmpty()){
-            return null;
-        }
-        Random rand = new Random();
-        int randomIndex = rand.nextInt(freeSpots.size());
-        Coordinate2D<Integer> randomDuo = freeSpots.get(randomIndex);
-        freeSpots.remove(randomIndex);
-        return randomDuo;
-    }
-
-    private Coordinate2D<Integer> getValidNeighbor(Coordinate2D<Integer> head) {
-        int[][] directions = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
-        
-        for (int[] dir : directions) {
-            int newX = head.getX() + dir[0];
-            int newY = head.getY() + dir[1];
-            
-            if (newX >= 0 && newX <= numberOfLines && newY >= 0 && newY <= numberOfLines) {
-                Coordinate2D<Integer> neighbor = new Coordinate2D<>(newX, newY);
-                if (freeSpots.contains(neighbor)) {
-                    return neighbor;
-                }
-            }
-        }
-        return null; 
-    }
+    private int level;
 
     @FXML
     public void initialize() {
@@ -109,187 +68,210 @@ public class GameLevelController {
     }
 
     public void startLevel(LevelSettings settings) {
-        this.numberOfLines = settings.getNumberOfLines();
+
+        level = settings.getLevelNumber();
 
         if (settings.getCssPath() != null) {
             try {
                 rootPane.getStylesheets().clear();
-                String css = getClass().getResource(settings.getCssPath()).toExternalForm();
+                String css = Objects.requireNonNull(getClass().getResource(settings.getCssPath())).toExternalForm();
                 rootPane.getStylesheets().add(css);
             } catch (Exception e) {
-                e.printStackTrace();
+                System.out.println(e.getMessage());
             }
         }
 
         gameRenderer.setTheme(
-            settings.getGridColor1(),
-            settings.getGridColor2(),
-            settings.getGridLineColor(),
-            settings.getSnakeColor()
+                settings.getGridColor1(),
+                settings.getGridColor2(),
+                settings.getGridLineColor(),
+                settings.getSnakeColor()
         );
 
-        snake = new Snake();
-        initFreeSpots();
+        engine = new GameEngine(settings.getNumberOfLines());
 
-        Coordinate2D<Integer> head = chooseFreeSpot(); 
-        Coordinate2D<Integer> tail = getValidNeighbor(head);
-        if (tail != null) {
-            freeSpots.remove(tail);
-        }
-        snake.init(head, tail);
-        food = chooseFreeSpot();
-
-        if (gameLoop != null) {
-            gameLoop.stop();
-        }
-
-        gameLoop = new AnimationTimer() {
-            @Override
-            public void handle(long now) {
-                render();
+        if (isAiMode) {
+            aiBrain = org.example.ai.NeuralNetwork.loadFromFile("champion.txt");
+            if (aiBrain != null) {
+                startAiLoop();
             }
-        };
-        gameLoop.start();
-        
+        } else {
+            Coordinate2D<Integer> head = engine.getSnake().getHead();
+            Coordinate2D<Integer> tail = engine.getSnake().getTail();
+            if (head != null && tail != null) {
+                lastDx = head.getX() - tail.getX();
+                lastDy = head.getY() - tail.getY();
+            }
+        }
+
         render();
+
+    }
+
+    private void startAiLoop() {
+        aiEnv = new org.example.ai.SnakeEnvironment(engine);
+
+        aiTimeline = new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(javafx.util.Duration.millis(100), e -> {
+
+                    double[] vision = aiEnv.getVision();
+                    int action = aiBrain.predict(vision);
+
+                    aiEnv.step(action);
+
+                    render();
+
+                    if (aiEnv.isDone()) {
+                        aiTimeline.stop();
+
+                        handleAiEnd();
+                    }
+                })
+        );
+        aiTimeline.setCycleCount(javafx.animation.Timeline.INDEFINITE);
+        aiTimeline.play();
+    }
+
+    private void handleAiEnd() {
+        if (engine.isLevelWon()) {
+            SoundManager.playWin();
+            ScreenManager.getInstance().openOverlay(SceneFactory.getGameNextOverlay());
+        } else {
+            SoundManager.playGameOver();
+            ScreenManager.getInstance().openOverlay(SceneFactory.getGameOverOverlay());
+        }
     }
 
     private void attachKeyEvent(Scene scene) {
         scene.setOnKeyPressed(event -> {
+            if (isAiMode) return;
+            if (engine == null || engine.isGameOver() || engine.isLevelWon()) return;
+
+            boolean moved = false;
             if (event.getCode() == KeyCode.UP) {
-                moveUp();
+                if (lastDx == 0 && lastDy == 1) return;
+                engine.getSnake().setDirection("up");
+                engine.move(0, -1);
+                lastDx = 0; lastDy = -1;
+                moved = true;
             } else if (event.getCode() == KeyCode.DOWN) {
-                moveDown();
+                if (lastDx == 0 && lastDy == -1) return;
+                engine.getSnake().setDirection("down");
+                engine.move(0, 1);
+                lastDx = 0; lastDy = 1;
+                moved = true;
             } else if (event.getCode() == KeyCode.LEFT) {
-                moveLeft();
+                if (lastDx == 1 && lastDy == 0) return;
+                engine.getSnake().setDirection("left");
+                engine.move(-1, 0);
+                lastDx = -1; lastDy = 0;
+                moved = true;
             } else if (event.getCode() == KeyCode.RIGHT) {
-                moveRight();
+                if (lastDx == -1 && lastDy == 0) return;
+                engine.getSnake().setDirection("right");
+                engine.move(1, 0);
+                lastDx = 1; lastDy = 0;
+                moved = true;
+            }
+
+            if (moved) {
+                checkGameState();
+                render();
             }
         });
     }
 
     private void attachSwipeEvent(Scene scene) {
         scene.setOnMousePressed(event -> {
+            if (isAiMode) return;
             dragStartX = event.getSceneX();
             dragStartY = event.getSceneY();
         });
 
         scene.setOnMouseReleased(event -> {
+            if (isAiMode || engine == null || engine.isGameOver() || engine.isLevelWon()) return;
+
             double dragEndX = event.getSceneX();
             double dragEndY = event.getSceneY();
-            
             double deltaX = dragEndX - dragStartX;
             double deltaY = dragEndY - dragStartY;
+
+            boolean moved = false;
 
             if (Math.abs(deltaX) > Math.abs(deltaY)) {
                 if (Math.abs(deltaX) > 30) {
                     if (deltaX > 0) {
-                        moveRight();
+                        if (lastDx == -1 && lastDy == 0) return;
+                        engine.getSnake().setDirection("right");
+                        engine.move(1, 0);
+                        lastDx = 1;
                     } else {
-                        moveLeft();
+                        if (lastDx == 1 && lastDy == 0) return;
+                        engine.getSnake().setDirection("left");
+                        engine.move(-1, 0);
+                        lastDx = -1;
                     }
+                    lastDy = 0;
+                    moved = true;
                 }
             } else {
                 if (Math.abs(deltaY) > 30) {
                     if (deltaY > 0) {
-                        moveDown();
-                    } else {
-                        moveUp();
+                        if (lastDx == 0 && lastDy == -1) return;
+                        engine.getSnake().setDirection("down");
+                        engine.move(0, 1);
+                        lastDx = 0; lastDy = 1;
+                    } else { // SUS
+                        if (lastDx == 0 && lastDy == 1) return;
+                        engine.getSnake().setDirection("up");
+                        engine.move(0, -1);
+                        lastDx = 0; lastDy = -1;
                     }
+                    moved = true;
                 }
+            }
+
+            if (moved) {
+                checkGameState();
+                render();
             }
         });
     }
 
-    private void moveUp() {
-        Coordinate2D<Integer> head = snake.getHead();
-        if (head.getY() > 0) {
-            Coordinate2D<Integer> next = new Coordinate2D<>(head.getX(), head.getY() - 1);
-            snake.setDirection("up");
-            handleNextStep(next);
-        }
-    }
-
-    private void moveDown() {
-        Coordinate2D<Integer> head = snake.getHead();
-        if (head.getY() < numberOfLines) { 
-            Coordinate2D<Integer> next = new Coordinate2D<>(head.getX(), head.getY() + 1);
-            snake.setDirection("down");
-            handleNextStep(next);
-        }
-    }
-
-    private void moveLeft() {
-        Coordinate2D<Integer> head = snake.getHead();
-        if (head.getX() > 0) {
-            Coordinate2D<Integer> next = new Coordinate2D<>(head.getX() - 1, head.getY());
-            snake.setDirection("left");
-            handleNextStep(next);
-        }
-    }
-
-    private void moveRight() {
-        Coordinate2D<Integer> head = snake.getHead();
-        if (head.getX() < numberOfLines) {
-            Coordinate2D<Integer> next = new Coordinate2D<>(head.getX() + 1, head.getY());
-            snake.setDirection("right");
-            handleNextStep(next);
+    private void checkGameState() {
+        if (engine.isGameOver() || engine.isLevelWon()) {
+            if (engine.isGameOver()) {
+                SoundManager.playGameOver();
+                ScreenManager.getInstance().openOverlay(SceneFactory.getGameOverOverlay());
+            } else {
+                SoundManager.playWin();
+                ScreenManager.getInstance().openOverlay(SceneFactory.getGameNextOverlay());
+            }
+        } else if (engine.didJustEat()) {
+            SoundManager.playEat();
         }
     }
 
     private void render() {
-        double sideLengthOfCanvas = gameCanvas.getHeight();
-        if (numberOfLines == 0) return; 
-        
-        double spacing = sideLengthOfCanvas / (numberOfLines + 1);
-        gameRenderer.drawField(sideLengthOfCanvas, numberOfLines);
-        gameRenderer.drawSnake(snake, spacing);
+        if (engine == null) return;
+
+        double sideLength = gameCanvas.getHeight();
+        int lines = engine.getNumberOfLines();
+        if (lines == 0) return;
+
+        double spacing = sideLength / (lines + 1);
+
+        gameRenderer.drawField(sideLength, lines);
+        gameRenderer.drawSnake(engine.getSnake(), spacing);
+
+        Coordinate2D<Integer> food = engine.getFood();
         if (food != null) {
-            if (numberOfLines == 2) { 
+            if (level == 1) {
                 gameRenderer.drawPear(spacing, food.getX(), food.getY());
             } else {
                 gameRenderer.drawLilyPad(spacing, food.getX(), food.getY());
             }
         }
-    }
-
-    private void handleNextStep(Coordinate2D<Integer> next){
-        if(snake.isBodyPart(next) && !(snake.getTail().equals(next))){
-            gameLoop.stop();
-            showGameOverOverlay();
-            return;
-        }
-
-        if(next.equals(food)){
-            snake.grow(next);
-            render();
-            SoundManager.playEat();
-            food = chooseFreeSpot();
-            
-            if(food == null){
-                render();
-                gameLoop.stop();
-                showNextOverlay();
-                return;
-            }
-        } else {
-            Coordinate2D<Integer> oldTail = snake.getTail();
-            snake.move(next); 
-            if (!next.equals(oldTail)) {
-                freeSpots.remove(next);
-                freeSpots.add(oldTail);
-            }
-        }
-    }
-
-    private void showNextOverlay() {
-        SoundManager.playWin();
-        ScreenManager.getInstance().openOverlay(SceneFactory.getGameNextOverlay());
-    }
-
-    private void showGameOverOverlay() {
-        SoundManager.playGameOver();
-        ScreenManager.getInstance().openOverlay(SceneFactory.getGameOverOverlay());
     }
 
 }
