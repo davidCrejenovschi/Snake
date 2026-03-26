@@ -55,7 +55,7 @@ Follow these steps to set up and run this project using **IntelliJ IDEA**.
 Open your terminal and run these commands:
 
 ```bash
-git clone https://github.com/davidCrejenovschi/YourProjectName.git
+git clone https://github.com/davidCrejenovschi/Snake.git
 ```
 
 ```bash
