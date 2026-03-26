@@ -8,14 +8,29 @@
   <img src="https://img.shields.io/badge/Java-21-orange?logo=openjdk" alt="Java 21">
   <img src="https://img.shields.io/badge/Framework-JavaFX-blue?logo=java" alt="JavaFX">
   <img src="https://img.shields.io/badge/Build-Gradle-02303A?logo=gradle" alt="Gradle">
+  <img src="https://img.shields.io/badge/AI-Neural_Network-red" alt="Neural Network">
 </p>
 
 ## 📦 Supported Platforms
 - **Windows:** `.exe` 
 
 ---
+## 📖 About The Project
 
-**Snake Adventure** is a classic arcade game implementation developed in Java using the JavaFX framework. It features a clean UI, multiple levels with different themes, and a modular architecture.
+**Snake Adventure** started as a classic arcade game implementation developed in **Java** using the **JavaFX** framework, focusing on a clean UI and modular architecture.
+
+The project has now evolved into a **Machine Learning experiment**, offering a dual experience for the user:
+
+* **🎮 Manual Play:** You can test your own navigation skills in the classic game mode.
+* **🤖 AI Demonstration:** The game features a **built-in, pre-trained AI agent**. You can watch in real-time as the neural network makes complex decisions, demonstrating survival strategies learned through hundreds of generations of artificial evolution.
+
+The AI system is powered by a custom-built **Feedforward Neural Network** optimized via a **Genetic Algorithm**, demonstrating how autonomous agents can learn complex spatial tasks without any human-coded rules.
+
+---
+
+> 📄 **Technical Documentation**
+> For a deep dive into the code architecture, mathematical formulas, and class structures, please refer to the detailed documentation found in:  
+> `assets/Snake AI Documentation.docx`
 
 ---
 
