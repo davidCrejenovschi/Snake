@@ -59,7 +59,7 @@ git clone https://github.com/davidCrejenovschi/Snake.git
 ```
 
 ```bash
-cd YourProjectName
+cd Snake
 ```
 
 ### 2. Open in IntelliJ IDEA
