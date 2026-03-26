@@ -7,12 +7,13 @@ build/
 .kotlin
 
 ### IntelliJ IDEA ###
-# Fisiere de sistem IntelliJ care nu trebuie urcate
-.idea/workspace.xml
-.idea/tasks.xml
-.idea/usage.statistics.xml
-.idea/shelf/
-.idea/dictionaries/
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
 
 # Fisierele listate de tine
 .idea/modules.xml
