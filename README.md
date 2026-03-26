@@ -33,7 +33,7 @@ The AI system is powered by a custom-built **Feedforward Neural Network** optimi
 ---
 
 ### 📈 Learning Curve
-The graph below demonstrates the exponential growth of the AI's fitness score across generations, utilizing a logarithmic scale:
+- The graph below demonstrates the exponential growth of the AI's fitness score across generations, utilizing a logarithmic scale:
 
 <p align="center">
   <img src="assets/graphic.png" alt="Project Demo">
@@ -49,7 +49,7 @@ Created for **learning purposes** only.
 ---
 
 ## 🛠️ Local Development Setup
-
+-
 Follow these steps to set up and run this project using **IntelliJ IDEA**.
 
 ### 1. Clone the Repository
