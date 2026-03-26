@@ -48,6 +48,17 @@ Created for **learning purposes** only.
 
 ---
 
+## 🎮 Play It Now (No Setup Required)
+
+You don't need to install Java or an IDE to play the game. 
+
+1. Go to the **[Releases](../../releases)** page.
+2. Download the latest `Snake_Adventure_v1.1_Windows.zip` file.
+3. Extract the folder anywhere on your PC.
+4. Run `SnakeAdventure.exe` and enjoy!
+
+---
+
 ## 🛠️ Local Development Setup
 Follow these steps to set up and run this project using **IntelliJ IDEA**.
 
