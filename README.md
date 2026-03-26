@@ -1,7 +1,7 @@
 # 🐍 Snake Adventure
 
 <p align="center">
-  <img src="assets/saakegame.gif" alt="Project Demo">
+  <img src="assets/snakegame.gif" alt="Project Demo">
 </p>
 
 <p align="center">
