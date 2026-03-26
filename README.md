@@ -28,7 +28,7 @@ The AI system is powered by a custom-built **Feedforward Neural Network** optimi
 
 ---
 
-📁 For a deep dive into the AI code architecture, **[Access the Technical Documentation DOCX here](assets/Snake_AI_Documentation.docx)**
+📁 For a deep dive into the AI code architecture, **[access the technical documentation here](assets/Snake_AI_Documentation.docx)**
 
 ---
 
@@ -45,6 +45,17 @@ The graph below demonstrates the exponential growth of the AI's fitness score ac
 All sound effects are used under the **[Mixkit Free License](https://mixkit.co/free-sound-effects/)**, which allows for use in personal and non-commercial projects, like this one.
 _GIF created using [VEED.io](https://www.veed.io/)._
 Created for **learning purposes** only.
+
+---
+
+## 🎮 Play It Now (No Setup Required)
+
+You don't need to install Java or an IDE to play the game. 
+
+1. Go to the **[Releases](../../releases)** page.
+2. Download the latest `Snake_Adventure_v1.1_Windows.zip` file.
+3. Extract the folder anywhere on your PC.
+4. Run `SnakeAdventure.exe` and enjoy!
 
 ---
 
