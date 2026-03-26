@@ -1,7 +1,7 @@
 # 🐍 Snake Adventure
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/bec09d06-1991-4dd6-8ee7-67eb229834ff" alt="Project Demo">
+  <img src="assets/saakegame.gif" alt="Project Demo">
 </p>
 
 <p align="center">
