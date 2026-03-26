@@ -49,8 +49,7 @@ Created for **learning purposes** only.
 ---
 
 ## 🛠️ Local Development Setup
--
-Follow these steps to set up and run this project using **IntelliJ IDEA**.
+- Follow these steps to set up and run this project using **IntelliJ IDEA**.
 
 ### 1. Clone the Repository
 Open your terminal and run these commands:
