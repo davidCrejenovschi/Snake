@@ -100,9 +100,8 @@ public class GameLevelController {
                 if (aiBrain != null) {
                     startAiLoop();
                 }
-            } else {
-                System.out.println("AI MODE IS NOT AVAILABLE");
             }
+            
         } else {
             Coordinate2D<Integer> head = engine.getSnake().getHead();
             Coordinate2D<Integer> tail = engine.getSnake().getTail();
