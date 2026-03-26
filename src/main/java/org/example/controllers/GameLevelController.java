@@ -91,9 +91,17 @@ public class GameLevelController {
         engine = new GameEngine(settings.getNumberOfLines());
 
         if (isAiMode) {
-            aiBrain = org.example.ai.NeuralNetwork.loadFromFile("champion.txt");
-            if (aiBrain != null) {
-                startAiLoop();
+            var inputStream = getClass().getResourceAsStream("/org/example/champion.txt");
+
+            if (inputStream != null) {
+
+                aiBrain = org.example.ai.NeuralNetwork.loadFromStream(inputStream);
+
+                if (aiBrain != null) {
+                    startAiLoop();
+                }
+            } else {
+                System.out.println("AI MODE IS NOT AVAILABLE");
             }
         } else {
             Coordinate2D<Integer> head = engine.getSnake().getHead();

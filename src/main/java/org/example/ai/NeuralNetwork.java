@@ -144,33 +144,51 @@ public class NeuralNetwork {
         }
     }
 
-    public static NeuralNetwork loadFromFile(String filepath) {
-        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(filepath))) {
-            String[] header = reader.readLine().split(",");
-            int in = Integer.parseInt(header[0]);
-            int hid = Integer.parseInt(header[1]);
-            int out = Integer.parseInt(header[2]);
+    public static NeuralNetwork loadFromStream(java.io.InputStream is) {
+        if (is == null) return null;
+
+        try (java.util.Scanner sc = new java.util.Scanner(is).useLocale(java.util.Locale.US)) {
+            sc.useDelimiter("[,\\s\\r\\n]+");
+
+            if (!sc.hasNextInt()) return null;
+
+            int in = sc.nextInt();
+            int hid = sc.nextInt();
+            int out = sc.nextInt();
 
             NeuralNetwork nn = new NeuralNetwork(in, hid, out);
 
             for (int i = 0; i < in; i++) {
                 for (int j = 0; j < hid; j++) {
-                    nn.weightsInputHidden[i][j] = Double.parseDouble(reader.readLine());
+                    if (sc.hasNextDouble()) {
+                        nn.weightsInputHidden[i][j] = sc.nextDouble();
+                    }
                 }
             }
+
             for (int i = 0; i < hid; i++) {
                 for (int j = 0; j < out; j++) {
-                    nn.weightsHiddenOutput[i][j] = Double.parseDouble(reader.readLine());
+                    if (sc.hasNextDouble()) {
+                        nn.weightsHiddenOutput[i][j] = sc.nextDouble();
+                    }
                 }
             }
+
             for (int i = 0; i < hid; i++) {
-                nn.biasHidden[i] = Double.parseDouble(reader.readLine());
+                if (sc.hasNextDouble()) {
+                    nn.biasHidden[i] = sc.nextDouble();
+                }
             }
+
             for (int i = 0; i < out; i++) {
-                nn.biasOutput[i] = Double.parseDouble(reader.readLine());
+                if (sc.hasNextDouble()) {
+                    nn.biasOutput[i] = sc.nextDouble();
+                }
             }
+
             return nn;
         } catch (Exception e) {
+            System.err.println("AI Brain Load Error: " + e.getMessage());
             return null;
         }
     }
