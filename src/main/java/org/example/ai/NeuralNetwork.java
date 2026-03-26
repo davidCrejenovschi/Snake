@@ -1,89 +1,177 @@
 package org.example.ai;
-
-import java.io.Serializable;
 import java.util.Random;
 
-public class NeuralNetwork implements Serializable {
+public class NeuralNetwork {
 
-    private int inputNodes = 11;   // Cei 11 senzori recomandați
-    private int hiddenNodes = 24;  // Suficient pentru a extrage tipare pe 4x4
-    private int outputNodes = 3;   // Merge Înainte, Viraj Dreapta, Viraj Stânga
+    private final double[][] weightsInputHidden;
+    private final double[][] weightsHiddenOutput;
+    private final double[] biasHidden;
+    private final double[] biasOutput;
 
-    private double[][] weightsIH; // Input to Hidden
-    private double[][] weightsHO; // Hidden to Output
-    private double[] biasH;
-    private double[] biasO;
+    private final int inputSize;
+    private final int hiddenSize;
+    private final int outputSize;
 
-    public NeuralNetwork() {
-        weightsIH = new double[hiddenNodes][inputNodes];
-        weightsHO = new double[outputNodes][hiddenNodes];
-        biasH = new double[hiddenNodes];
-        biasO = new double[outputNodes];
-        randomize();
+    public NeuralNetwork(int inputSize, int hiddenSize, int outputSize) {
+        this.inputSize = inputSize;
+        this.hiddenSize = hiddenSize;
+        this.outputSize = outputSize;
+
+        weightsInputHidden = new double[inputSize][hiddenSize];
+        weightsHiddenOutput = new double[hiddenSize][outputSize];
+        biasHidden = new double[hiddenSize];
+        biasOutput = new double[outputSize];
+
+        initializeRandomWeights();
     }
 
+    private void initializeRandomWeights() {
+        Random rand = new Random();
 
-    public NeuralNetwork cloneAndMutate(double mutationRate) {
-        NeuralNetwork child = new NeuralNetwork();
-        java.util.Random r = new java.util.Random();
-
-        for (int i = 0; i < hiddenNodes; i++) {
-            for (int j = 0; j < inputNodes; j++) {
-                child.weightsIH[i][j] = this.weightsIH[i][j];
-                if (r.nextDouble() < mutationRate) child.weightsIH[i][j] += r.nextGaussian() * 0.1;
+        for (int i = 0; i < inputSize; i++) {
+            for (int j = 0; j < hiddenSize; j++) {
+                weightsInputHidden[i][j] = rand.nextDouble() * 2 - 1;
             }
-            child.biasH[i] = this.biasH[i];
-            if (r.nextDouble() < mutationRate) child.biasH[i] += r.nextGaussian() * 0.1;
+        }
+        for (int i = 0; i < hiddenSize; i++) {
+            biasHidden[i] = rand.nextDouble() * 2 - 1;
+            for (int j = 0; j < outputSize; j++) {
+                weightsHiddenOutput[i][j] = rand.nextDouble() * 2 - 1;
+            }
+        }
+        for (int i = 0; i < outputSize; i++) {
+            biasOutput[i] = rand.nextDouble() * 2 - 1;
+        }
+    }
+
+    private double relu(double x) {
+        return Math.max(0, x);
+    }
+
+    public int predict(double[] inputs) {
+        double[] hidden = new double[hiddenSize];
+        for (int j = 0; j < hiddenSize; j++) {
+            double sum = biasHidden[j];
+            for (int i = 0; i < inputSize; i++) {
+                sum += inputs[i] * weightsInputHidden[i][j];
+            }
+            hidden[j] = relu(sum);
         }
 
-        for (int i = 0; i < outputNodes; i++) {
-            for (int j = 0; j < hiddenNodes; j++) {
-                child.weightsHO[i][j] = this.weightsHO[i][j];
-                if (r.nextDouble() < mutationRate) child.weightsHO[i][j] += r.nextGaussian() * 0.1;
+        double[] output = new double[outputSize];
+        for (int j = 0; j < outputSize; j++) {
+            double sum = biasOutput[j];
+            for (int i = 0; i < hiddenSize; i++) {
+                sum += hidden[i] * weightsHiddenOutput[i][j];
             }
-            child.biasO[i] = this.biasO[i];
-            if (r.nextDouble() < mutationRate) child.biasO[i] += r.nextGaussian() * 0.1;
+            output[j] = sum;
+        }
+
+        int bestAction = 0;
+        double maxScore = output[0];
+        for (int i = 1; i < outputSize; i++) {
+            if (output[i] > maxScore) {
+                maxScore = output[i];
+                bestAction = i;
+            }
+        }
+
+        return bestAction;
+    }
+
+    public NeuralNetwork crossover(NeuralNetwork partner) {
+        NeuralNetwork child = new NeuralNetwork(inputSize, hiddenSize, outputSize);
+        Random r = new Random();
+
+        for (int i = 0; i < inputSize; i++) {
+            for (int j = 0; j < hiddenSize; j++) {
+                child.weightsInputHidden[i][j] = r.nextBoolean() ? this.weightsInputHidden[i][j] : partner.weightsInputHidden[i][j];
+            }
+        }
+        for (int i = 0; i < hiddenSize; i++) {
+            child.biasHidden[i] = r.nextBoolean() ? this.biasHidden[i] : partner.biasHidden[i];
+            for (int j = 0; j < outputSize; j++) {
+                child.weightsHiddenOutput[i][j] = r.nextBoolean() ? this.weightsHiddenOutput[i][j] : partner.weightsHiddenOutput[i][j];
+            }
+        }
+        for (int i = 0; i < outputSize; i++) {
+            child.biasOutput[i] = r.nextBoolean() ? this.biasOutput[i] : partner.biasOutput[i];
         }
         return child;
     }
 
-    private void randomize() {
+    public void mutate(double mutationRate) {
         Random r = new Random();
-        for (int i = 0; i < hiddenNodes; i++) {
-            for (int j = 0; j < inputNodes; j++) weightsIH[i][j] = r.nextGaussian();
-            biasH[i] = r.nextGaussian();
-        }
-        for (int i = 0; i < outputNodes; i++) {
-            for (int j = 0; j < hiddenNodes; j++) weightsHO[i][j] = r.nextGaussian();
-            biasO[i] = r.nextGaussian();
-        }
+        mutateMatrix(weightsInputHidden, mutationRate, r);
+        mutateMatrix(weightsHiddenOutput, mutationRate, r);
+        mutateArray(biasHidden, mutationRate, r);
+        mutateArray(biasOutput, mutationRate, r);
     }
 
-    public int predict(double[] inputs) {
-        double[] hidden = activate(matrixMultiply(weightsIH, inputs, biasH));
-        double[] output = activate(matrixMultiply(weightsHO, hidden, biasO));
-
-        // Returnează indexul celei mai mari valori (Softmax simplificat)
-        int maxIdx = 0;
-        for (int i = 1; i < output.length; i++) {
-            if (output[i] > output[maxIdx]) maxIdx = i;
-        }
-        return maxIdx;
-    }
-
-    private double[] activate(double[] x) {
-        for (int i = 0; i < x.length; i++) x[i] = Math.tanh(x[i]); // Funcție de activare
-        return x;
-    }
-
-    private double[] matrixMultiply(double[][] w, double[] inputs, double[] b) {
-        double[] result = new double[w.length];
-        for (int i = 0; i < w.length; i++) {
-            for (int j = 0; j < inputs.length; j++) {
-                result[i] += w[i][j] * inputs[j];
+    private void mutateMatrix(double[][] matrix, double rate, Random r) {
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[i].length; j++) {
+                if (r.nextDouble() < rate) {
+                    matrix[i][j] += r.nextGaussian() * 0.5;
+                }
             }
-            result[i] += b[i];
         }
-        return result;
+    }
+
+    private void mutateArray(double[] array, double rate, Random r) {
+        for (int i = 0; i < array.length; i++) {
+            if (r.nextDouble() < rate) {
+                array[i] += r.nextGaussian() * 0.5;
+            }
+        }
+    }
+
+    public void saveToFile(String filepath) {
+        try (java.io.PrintWriter writer = new java.io.PrintWriter(filepath)) {
+            writer.println(inputSize + "," + hiddenSize + "," + outputSize);
+
+            for (double[] row : weightsInputHidden) {
+                for (double val : row) writer.println(val);
+            }
+            for (double[] row : weightsHiddenOutput) {
+                for (double val : row) writer.println(val);
+            }
+            for (double val : biasHidden) writer.println(val);
+            for (double val : biasOutput) writer.println(val);
+
+        } catch (java.io.IOException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public static NeuralNetwork loadFromFile(String filepath) {
+        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(filepath))) {
+            String[] header = reader.readLine().split(",");
+            int in = Integer.parseInt(header[0]);
+            int hid = Integer.parseInt(header[1]);
+            int out = Integer.parseInt(header[2]);
+
+            NeuralNetwork nn = new NeuralNetwork(in, hid, out);
+
+            for (int i = 0; i < in; i++) {
+                for (int j = 0; j < hid; j++) {
+                    nn.weightsInputHidden[i][j] = Double.parseDouble(reader.readLine());
+                }
+            }
+            for (int i = 0; i < hid; i++) {
+                for (int j = 0; j < out; j++) {
+                    nn.weightsHiddenOutput[i][j] = Double.parseDouble(reader.readLine());
+                }
+            }
+            for (int i = 0; i < hid; i++) {
+                nn.biasHidden[i] = Double.parseDouble(reader.readLine());
+            }
+            for (int i = 0; i < out; i++) {
+                nn.biasOutput[i] = Double.parseDouble(reader.readLine());
+            }
+            return nn;
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

@@ -84,7 +84,6 @@ public class HomeMenuController {
     private void onAiToggleClicked() {
         SoundManager.playClick();
 
-        // Totul e instantaneu acum! Fără servere, fără așteptare.
         if (aiToggleButton.isSelected()) {
             aiToggleButton.setText("AI MODE: ON");
             GameLevelController.isAiMode = true;

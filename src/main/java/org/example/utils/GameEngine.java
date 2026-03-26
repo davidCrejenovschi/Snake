@@ -1,67 +1,52 @@
 package org.example.utils;
-
-import java.util.ArrayList;
 import java.util.Random;
+
 
 public class GameEngine {
 
     private final int numberOfLines;
     private final Snake snake;
     private Coordinate2D<Integer> food;
-    private final ArrayList<Coordinate2D<Integer>> freeSpots;
     private boolean isGameOver = false;
     private boolean isLevelWon = false;
     private boolean justAte = false;
+    private final Random rand = new Random();
 
     public GameEngine(int numberOfLines) {
         this.numberOfLines = numberOfLines;
-        this.freeSpots = new ArrayList<>();
         this.snake = new Snake();
-        initFreeSpots();
         spawnInitialSnakeAndFood();
     }
 
-    private void initFreeSpots() {
-        freeSpots.clear();
-        for (int i = 0; i <= numberOfLines; i++) {
-            for (int j = 0; j <= numberOfLines; j++) {
-                freeSpots.add(new Coordinate2D<>(i, j));
-            }
-        }
-    }
+    private Coordinate2D<Integer> spawnRandomFood() {
 
-    private Coordinate2D<Integer> chooseFreeSpot() {
-        if (freeSpots.isEmpty()) {
+        int totalTiles = (numberOfLines + 1) * (numberOfLines + 1);
+
+        if (snake.getBody().size() >= totalTiles) {
+            isLevelWon = true;
             return null;
         }
-        Random rand = new Random();
-        int randomIndex = rand.nextInt(freeSpots.size());
-        return freeSpots.remove(randomIndex);
-    }
 
-    private Coordinate2D<Integer> getValidNeighbor(Coordinate2D<Integer> head) {
-        int[][] directions = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
-        for (int[] dir : directions) {
-            int newX = head.getX() + dir[0];
-            int newY = head.getY() + dir[1];
-            if (newX >= 0 && newX <= numberOfLines && newY >= 0 && newY <= numberOfLines) {
-                Coordinate2D<Integer> neighbor = new Coordinate2D<>(newX, newY);
-                if (freeSpots.contains(neighbor)) {
-                    return neighbor;
-                }
-            }
-        }
-        return null;
+        int x, y;
+        Coordinate2D<Integer> newFood;
+        do {
+            x = rand.nextInt(numberOfLines + 1);
+            y = rand.nextInt(numberOfLines + 1);
+            newFood = new Coordinate2D<>(x, y);
+        } while (snake.isBodyPart(newFood));
+
+        return newFood;
     }
 
     private void spawnInitialSnakeAndFood() {
-        Coordinate2D<Integer> head = chooseFreeSpot();
-        Coordinate2D<Integer> tail = getValidNeighbor(head);
-        if (tail != null) {
-            freeSpots.remove(tail);
-        }
+        int headX = numberOfLines / 2;
+        int headY = numberOfLines / 2;
+        Coordinate2D<Integer> head = new Coordinate2D<>(headX, headY);
+        Coordinate2D<Integer> tail = new Coordinate2D<>(headX + 1, headY);
+
         snake.init(head, tail);
-        food = chooseFreeSpot();
+        snake.setDirection("left");
+        food = spawnRandomFood();
     }
 
     public void move(int dx, int dy) {
@@ -76,10 +61,6 @@ public class GameEngine {
             return;
         }
 
-        handleNextStep(next);
-    }
-
-    private void handleNextStep(Coordinate2D<Integer> next) {
         if (snake.isBodyPart(next) && !snake.getTail().equals(next)) {
             isGameOver = true;
             return;
@@ -88,18 +69,12 @@ public class GameEngine {
         if (next.equals(food)) {
             snake.grow(next);
             justAte = true;
-            food = chooseFreeSpot();
+            food = spawnRandomFood();
             if (food == null) {
                 isLevelWon = true;
             }
-        } else {
-            Coordinate2D<Integer> oldTail = snake.getTail();
+        }else {
             snake.move(next);
-
-            if (!next.equals(oldTail)) {
-                freeSpots.remove(next);
-                freeSpots.add(oldTail);
-            }
         }
     }
 

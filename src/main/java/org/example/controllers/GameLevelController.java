@@ -1,7 +1,5 @@
 package org.example.controllers;
 
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
@@ -9,20 +7,15 @@ import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.StackPane;
-import javafx.util.Duration;
 import org.example.SceneFactory;
 import org.example.ScreenManager;
 import org.example.utils.*;
-import java.io.FileInputStream;
-import java.io.ObjectInputStream;
 import java.util.Objects;
-import org.example.ai.NeuralNetwork;
+
 
 public class GameLevelController {
 
     public static boolean isAiMode = false;
-    private int movesSinceLastApple = 0;
-
     private class LayoutHandler implements ChangeListener<Number> {
         @Override
         public void changed(ObservableValue<? extends Number> obs, Number oldVal, Number newVal) {
@@ -34,13 +27,13 @@ public class GameLevelController {
             javafx.application.Platform.runLater(GameLevelController.this::render);
         }
     }
-
     private final LayoutHandler layoutHandler = new LayoutHandler();
+    private javafx.animation.Timeline aiTimeline;
+    private org.example.ai.SnakeEnvironment aiEnv;
+    private org.example.ai.NeuralNetwork aiBrain;
 
     @FXML
     private StackPane rootPane;
-    @FXML
-    private StackPane overlayLayer;
     @FXML
     private Canvas gameCanvas;
 
@@ -50,8 +43,8 @@ public class GameLevelController {
     private double dragStartX;
     private double dragStartY;
 
-    private NeuralNetwork aiBrain;
-    private Timeline aiLoop;
+    private int lastDx = 0;
+    private int lastDy = 0;
 
     private int level;
 
@@ -75,9 +68,6 @@ public class GameLevelController {
     }
 
     public void startLevel(LevelSettings settings) {
-        if (aiLoop != null) {
-            aiLoop.stop();
-        }
 
         level = settings.getLevelNumber();
 
@@ -99,25 +89,56 @@ public class GameLevelController {
         );
 
         engine = new GameEngine(settings.getNumberOfLines());
-        render();
 
         if (isAiMode) {
-            loadAiBrain("campion_4x4.dat");
+            aiBrain = org.example.ai.NeuralNetwork.loadFromFile("champion.txt");
             if (aiBrain != null) {
                 startAiLoop();
-            } else {
-                System.err.println("[!] Nu s-a putut porni AI-ul. Lipseste fisierul campionului.");
+            }
+        } else {
+            Coordinate2D<Integer> head = engine.getSnake().getHead();
+            Coordinate2D<Integer> tail = engine.getSnake().getTail();
+            if (head != null && tail != null) {
+                lastDx = head.getX() - tail.getX();
+                lastDy = head.getY() - tail.getY();
             }
         }
+
+        render();
+
     }
 
-    private void loadAiBrain(String filePath) {
-        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(filePath))) {
-            aiBrain = (NeuralNetwork) in.readObject();
-            System.out.println("[*] Creierul AI a fost incarcat cu succes!");
-        } catch (Exception e) {
-            aiBrain = null;
-            System.err.println("[!] Eroare la incarcarea fisierului .dat: " + e.getMessage());
+    private void startAiLoop() {
+        aiEnv = new org.example.ai.SnakeEnvironment(engine);
+
+        aiTimeline = new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(javafx.util.Duration.millis(100), e -> {
+
+                    double[] vision = aiEnv.getVision();
+                    int action = aiBrain.predict(vision);
+
+                    aiEnv.step(action);
+
+                    render();
+
+                    if (aiEnv.isDone()) {
+                        aiTimeline.stop();
+
+                        handleAiEnd();
+                    }
+                })
+        );
+        aiTimeline.setCycleCount(javafx.animation.Timeline.INDEFINITE);
+        aiTimeline.play();
+    }
+
+    private void handleAiEnd() {
+        if (engine.isLevelWon()) {
+            SoundManager.playWin();
+            ScreenManager.getInstance().openOverlay(SceneFactory.getGameNextOverlay());
+        } else {
+            SoundManager.playGameOver();
+            ScreenManager.getInstance().openOverlay(SceneFactory.getGameOverOverlay());
         }
     }
 
@@ -128,20 +149,28 @@ public class GameLevelController {
 
             boolean moved = false;
             if (event.getCode() == KeyCode.UP) {
+                if (lastDx == 0 && lastDy == 1) return;
                 engine.getSnake().setDirection("up");
                 engine.move(0, -1);
+                lastDx = 0; lastDy = -1;
                 moved = true;
             } else if (event.getCode() == KeyCode.DOWN) {
+                if (lastDx == 0 && lastDy == -1) return;
                 engine.getSnake().setDirection("down");
                 engine.move(0, 1);
+                lastDx = 0; lastDy = 1;
                 moved = true;
             } else if (event.getCode() == KeyCode.LEFT) {
+                if (lastDx == 1 && lastDy == 0) return;
                 engine.getSnake().setDirection("left");
                 engine.move(-1, 0);
+                lastDx = -1; lastDy = 0;
                 moved = true;
             } else if (event.getCode() == KeyCode.RIGHT) {
+                if (lastDx == -1 && lastDy == 0) return;
                 engine.getSnake().setDirection("right");
                 engine.move(1, 0);
+                lastDx = 1; lastDy = 0;
                 moved = true;
             }
 
@@ -172,22 +201,31 @@ public class GameLevelController {
             if (Math.abs(deltaX) > Math.abs(deltaY)) {
                 if (Math.abs(deltaX) > 30) {
                     if (deltaX > 0) {
+                        if (lastDx == -1 && lastDy == 0) return;
                         engine.getSnake().setDirection("right");
                         engine.move(1, 0);
+                        lastDx = 1;
                     } else {
+                        if (lastDx == 1 && lastDy == 0) return;
                         engine.getSnake().setDirection("left");
                         engine.move(-1, 0);
+                        lastDx = -1;
                     }
+                    lastDy = 0;
                     moved = true;
                 }
             } else {
                 if (Math.abs(deltaY) > 30) {
                     if (deltaY > 0) {
+                        if (lastDx == 0 && lastDy == -1) return;
                         engine.getSnake().setDirection("down");
                         engine.move(0, 1);
-                    } else {
+                        lastDx = 0; lastDy = 1;
+                    } else { // SUS
+                        if (lastDx == 0 && lastDy == 1) return;
                         engine.getSnake().setDirection("up");
                         engine.move(0, -1);
+                        lastDx = 0; lastDy = -1;
                     }
                     moved = true;
                 }
@@ -202,8 +240,6 @@ public class GameLevelController {
 
     private void checkGameState() {
         if (engine.isGameOver() || engine.isLevelWon()) {
-            if (aiLoop != null) aiLoop.stop();
-
             if (engine.isGameOver()) {
                 SoundManager.playGameOver();
                 ScreenManager.getInstance().openOverlay(SceneFactory.getGameOverOverlay());
@@ -238,146 +274,4 @@ public class GameLevelController {
         }
     }
 
-    private void startAiLoop() {
-        movesSinceLastApple = 0;
-
-        // Ticăie la fiecare 100ms
-        aiLoop = new Timeline(new KeyFrame(Duration.millis(100), event -> {
-            if (engine == null || engine.isGameOver() || engine.isLevelWon()) {
-                aiLoop.stop();
-                return;
-            }
-
-            double[] state = getState(engine);
-            int action = aiBrain.predict(state);
-
-            int sizeBefore = engine.getSnake().getBody().size();
-            applyRelativeAction(action);
-
-            if (engine.getSnake().getBody().size() > sizeBefore) {
-                movesSinceLastApple = 0;
-            } else {
-                movesSinceLastApple++;
-            }
-
-            // Folosim aceeași limită de înfometare ca la antrenament (GridSize * GridSize)
-            int limit = engine.getNumberOfLines() * engine.getNumberOfLines();
-            if (movesSinceLastApple > limit) {
-                System.out.println("[!] AI-ul a intrat în Safe Loop (Înfometare). Executat pentru pierdere de timp!");
-                aiLoop.stop();
-                SoundManager.playGameOver();
-                ScreenManager.getInstance().openOverlay(SceneFactory.getGameOverOverlay());
-                return;
-            }
-
-            checkGameState();
-            render();
-        }));
-
-        aiLoop.setCycleCount(Timeline.INDEFINITE);
-        aiLoop.play();
-    }
-
-    private double[] getState(GameEngine e) {
-        int headX = e.getSnake().getHead().getX();
-        int headY = e.getSnake().getHead().getY();
-        int foodX = e.getFood().getX();
-        int foodY = e.getFood().getY();
-        String currentDir = e.getSnake().getDirection();
-
-        double dirUp = currentDir.equals("up") ? 1.0 : 0.0;
-        double dirDown = currentDir.equals("down") ? 1.0 : 0.0;
-        double dirLeft = currentDir.equals("left") ? 1.0 : 0.0;
-        double dirRight = currentDir.equals("right") ? 1.0 : 0.0;
-
-        Coordinate2D<Integer> pointUp = new Coordinate2D<>(headX, headY - 1);
-        Coordinate2D<Integer> pointDown = new Coordinate2D<>(headX, headY + 1);
-        Coordinate2D<Integer> pointLeft = new Coordinate2D<>(headX - 1, headY);
-        Coordinate2D<Integer> pointRight = new Coordinate2D<>(headX + 1, headY);
-
-        boolean dangerUp = isCollision(e, pointUp);
-        boolean dangerDown = isCollision(e, pointDown);
-        boolean dangerLeft = isCollision(e, pointLeft);
-        boolean dangerRight = isCollision(e, pointRight);
-
-        double dangerStraight = 0.0, dangerTurnLeft = 0.0, dangerTurnRight = 0.0;
-
-        if (dirUp == 1.0) {
-            dangerStraight = dangerUp ? 1.0 : 0.0;
-            dangerTurnRight = dangerRight ? 1.0 : 0.0;
-            dangerTurnLeft = dangerLeft ? 1.0 : 0.0;
-        } else if (dirDown == 1.0) {
-            dangerStraight = dangerDown ? 1.0 : 0.0;
-            dangerTurnRight = dangerLeft ? 1.0 : 0.0;
-            dangerTurnLeft = dangerRight ? 1.0 : 0.0;
-        } else if (dirLeft == 1.0) {
-            dangerStraight = dangerLeft ? 1.0 : 0.0;
-            dangerTurnRight = dangerUp ? 1.0 : 0.0;
-            dangerTurnLeft = dangerDown ? 1.0 : 0.0;
-        } else if (dirRight == 1.0) {
-            dangerStraight = dangerRight ? 1.0 : 0.0;
-            dangerTurnRight = dangerDown ? 1.0 : 0.0;
-            dangerTurnLeft = dangerUp ? 1.0 : 0.0;
-        }
-
-        // ORDINUL EXACT CA ÎN SNAKEAGENT
-        return new double[]{
-                dangerStraight, dangerTurnLeft, dangerTurnRight, // 3 senzori pericol
-                dirUp, dirDown, dirLeft, dirRight,               // 4 senzori direcție curentă
-                foodX < headX ? 1.0 : 0.0, // Food is Left      // 4 senzori direcție mâncare
-                foodX > headX ? 1.0 : 0.0, // Food is Right
-                foodY < headY ? 1.0 : 0.0, // Food is Up
-                foodY > headY ? 1.0 : 0.0  // Food is Down
-        };
-    }
-
-    private boolean isCollision(GameEngine e, Coordinate2D<Integer> pt) {
-        if (pt.getX() < 0 || pt.getX() >= e.getNumberOfLines() || pt.getY() < 0 || pt.getY() >= e.getNumberOfLines()) {
-            return true;
-        }
-        for (var segment : e.getSnake().getBody()) {
-            if (segment.getX().equals(pt.getX()) && segment.getY().equals(pt.getY())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void applyRelativeAction(int action) {
-        String currentDir = engine.getSnake().getDirection();
-
-        if (action == 0) {
-            moveByDirection(currentDir);
-            return;
-        }
-
-        if (action == 1) { // Viraj Dreapta
-            switch (currentDir) {
-                case "up" -> moveByDirection("right");
-                case "down" -> moveByDirection("left");
-                case "left" -> moveByDirection("up");
-                case "right" -> moveByDirection("down");
-            }
-            return;
-        }
-
-        if (action == 2) { // Viraj Stânga
-            switch (currentDir) {
-                case "up" -> moveByDirection("left");
-                case "down" -> moveByDirection("right");
-                case "left" -> moveByDirection("down");
-                case "right" -> moveByDirection("up");
-            }
-        }
-    }
-
-    private void moveByDirection(String dir) {
-        engine.getSnake().setDirection(dir);
-        switch (dir) {
-            case "up" -> engine.move(0, -1);
-            case "down" -> engine.move(0, 1);
-            case "left" -> engine.move(-1, 0);
-            case "right" -> engine.move(1, 0);
-        }
-    }
 }
